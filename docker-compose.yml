@@ -1,0 +1,22 @@
+version: '3'
+services:
+  mongo:
+    image: mongo
+    container_name: ast_mongo
+    ports:
+      - "27017:27017"
+  asterisk:
+    image: ast_mongo-asterisk:16.0.0
+    container_name: asterisk
+    ports:
+      - "5060:5060"
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        VERSION_ASTERISK: 16.0.0
+        VERSION_MONGOC: 1.13.0
+        VERSION_LIBSRTP: 2.1.0
+        DATABASE_HOST: mongodb://ast_mongo:27017
+    volumes:
+        ./asterisk:/etc/asterisk
