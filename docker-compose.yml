@@ -22,7 +22,7 @@ services:
         DATABASE_HOST: mongodb://ast_mongo:27017
         DATABASE_NAME: asterisk
   nodejs:
-    image: nodeJS
+    image: node
     container_name: node_server
     ports:
       - "80:80"
