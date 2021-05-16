@@ -109,8 +109,28 @@ RUN echo "[general]\n\
         central24=America/Chicago|'vm-received' q 'digits/at' H N 'hours'\n\
         military=Zulu|?~@~Yvm-received' q 'digits/at' H N 'hours' 'phonetic/z_p'\n\
         european=Europe/Copenhagen|'vm-received' a d b 'digits/at' HM" > /etc/asterisk/voicemail.conf && \
-    echo ";\n\
-        ;   modules.conf\n\
+    echo " ;\n\
+        ;   asterisk.conf\n\
+        ;\n\
+        [directories](!)\n\
+        astetcdir => /etc/asterisk\n\
+        astmoddir => /usr/lib/asterisk/modules\n\
+        astvarlibdir => /var/lib/asterisk\n\
+        astdbdir => /var/lib/asterisk\n\
+        astkeydir => /var/lib/asterisk\n\
+        astdatadir => /var/lib/asterisk\n\
+        astagidir => /var/lib/asterisk/agi-bin\n\
+        astspooldir => /var/spool/asterisk\n\
+        astrundir => /var/run/asterisk\n\
+        astlogdir => /var/log/asterisk\n\
+        astsbindir => /usr/sbin\n\
+        \n\
+        [options]\n\
+        timestamp = yes        ; Same as -T at startup.\n\
+        highpriority = yes     ; Run realtime priority (same as -p at startup).\n\
+        dumpcore = yes         ; Dump core on crash (same as -g at startup).\n\
+        autosystemname = yes   ; Automatically set systemname to hostname, uses 'localhost' on failure, or systemname if set" > /etc/asterisk/asterisk.conf
+    echo    ";   modules.conf\n\
         ;\n\
         [modules]\n\
         ;\n\

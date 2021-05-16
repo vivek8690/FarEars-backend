@@ -18,5 +18,3 @@ services:
         VERSION_MONGOC: 1.13.0
         VERSION_LIBSRTP: 2.1.0
         DATABASE_HOST: mongodb://ast_mongo:27017
-    volumes:
-      - ./asterisk:/etc/asterisk
