@@ -232,7 +232,7 @@ RUN echo "[general]\n\
         ;enabled = yes ; When set to yes, statsd support is enabled\n\
         ;server = 127.0.0.1	; server[:port] of statsd server to use.\n\
         ;prefix =			; Prefix to prepend to all metrics\n\
-        ;add_newline = no" > /etc/asterisk/statsd.conf
+        ;add_newline = no" > /etc/asterisk/statsd.conf && \
     echo "[default]\n\
         mode=files\n\
         directory=/var/lib/asterisk/moh\n\
