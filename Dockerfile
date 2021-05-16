@@ -86,7 +86,6 @@ RUN  cd $HOME/asterisk-$VERSION_ASTERISK && \
     make install && \
     ldconfig && \
     make && \
-    make samples && \
     make config && \
     make install-logrotate 
     
