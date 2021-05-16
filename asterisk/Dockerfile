@@ -16,8 +16,6 @@ ENV DEBIAN_FRONTEND noninteractive
 # SHELL ["/bin/bash", "-c"]
 
 WORKDIR /root
-RUN  mkdir src
-RUN  mkdir ast_mongo
 
 RUN apt-get update \
 &&  apt-get install -y \
