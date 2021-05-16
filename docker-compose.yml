@@ -5,6 +5,8 @@ services:
     container_name: ast_mongo
     ports:
       - "27017:27017"
+    volumes:
+      - /data/db:/data/db
   asterisk:
     image: ast_mongo-asterisk:16.0.0
     container_name: asterisk
