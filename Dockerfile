@@ -129,7 +129,7 @@ RUN echo "[general]\n\
         timestamp = yes        ; Same as -T at startup.\n\
         highpriority = yes     ; Run realtime priority (same as -p at startup).\n\
         dumpcore = yes         ; Dump core on crash (same as -g at startup).\n\
-        autosystemname = yes   ; Automatically set systemname to hostname, uses 'localhost' on failure, or systemname if set" > /etc/asterisk/asterisk.conf
+        autosystemname = yes   ; Automatically set systemname to hostname, uses 'localhost' on failure, or systemname if set" > /etc/asterisk/asterisk.conf && \
     echo    ";   modules.conf\n\
         ;\n\
         [modules]\n\
