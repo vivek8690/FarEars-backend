@@ -106,7 +106,7 @@ RUN echo "[general]\n\
   central=America/Chicago|'vm-received' Q 'digits/at' IMp\n\
   central24=America/Chicago|'vm-received' q 'digits/at' H N 'hours'\n\
   military=Zulu|?~@~Yvm-received' q 'digits/at' H N 'hours' 'phonetic/z_p'\n\
-  european=Europe/Copenhagen|'vm-received' a d b 'digits/at' HM" > /etc/asterisk/voicemail.conf
+  european=Europe/Copenhagen|'vm-received' a d b 'digits/at' HM" > /etc/asterisk/voicemail.conf && \
 
   echo ";\n\
   ;   modules.conf\n\
