@@ -86,7 +86,9 @@ RUN  cd $HOME/asterisk-$VERSION_ASTERISK && \
     make install && \
     ldconfig && \
     make && \
-    make samples 
+    make samples && \
+    make config && \
+    make install-logrotate 
     
 RUN cp $HOME/ast_mongo/test_bench/configs/* /etc/asterisk/
 
