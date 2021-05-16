@@ -227,11 +227,10 @@ RUN echo "[general]\n\
         console => notice,warning,error\n\
         messages => notice,warning,error\n\
         full => notice,warning,error,verbose,dtmf,fax,verbose(4)" > /etc/asterisk/logger.conf &&\
-    echo "
-        [general]\n\
-        ;enabled = yes ; When set to yes, statsd support is enabled\n\
-        ;server = 127.0.0.1	; server[:port] of statsd server to use.\n\
-        ;prefix =			; Prefix to prepend to all metrics\n\
+    echo "[general]\n\
+        ;enabled = yes ; When set to yes, statsd support is enabled \n\
+        ;server = 127.0.0.1	; server[:port] of statsd server to use. \n\
+        ;prefix =			; Prefix to prepend to all metrics \n\
         ;add_newline = no" > /etc/asterisk/statsd.conf && \
     echo "[default]\n\
         mode=files\n\
