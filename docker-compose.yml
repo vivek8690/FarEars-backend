@@ -26,11 +26,13 @@ services:
     container_name: node_server
     ports:
       - "80:80"
-    command: npm run start
+    command: npm run dev
     build:
       context: ./server
       dockerfile: Dockerfile
-      args:
-        DATABASE_HOST: mongodb://ast_mongo:27017
-        DATABASE_NAME: asterisk
-
+    depends_on:
+      - mongo
+    volumes:
+      - ./server:/app
+      - ./server/node_modules:/app/node_modules
+    restart: always

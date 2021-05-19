@@ -1,16 +1,18 @@
 'use strict';
+const { port, env } = require('./config/vars');
+const logger = require('./config/logger');
+const app = require('./config/express');
+const mongoose = require('./config/mongoose');
+const routes = require('./api/routes/index');
 
-const express = require('express');
+// open mongoose connection
+mongoose.connect();
 
-// Constants
-const PORT = 80;
-const HOST = '0.0.0.0';
+// listen to requests
+app.listen(port, () => logger.info(`server started on port ${port} (${env})`));
 
-// App
-const app = express();
-app.get('/', (req, res) => {
-  res.send('Hello World');
-});
-
-app.listen(PORT, HOST);
-console.log(`Running on http://${HOST}:${PORT}`);
+/**
+* Exports express
+* @public
+*/
+module.exports = app;
