@@ -8,8 +8,6 @@ const AuthSchema = new mongoose.Schema({
     username: String,
     password: String,
     md5_cred: String,
-    realm: String,
-    nonce_lifetime: Number
 }, {
     timestamps: true,
 });
