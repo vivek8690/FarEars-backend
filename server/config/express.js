@@ -18,7 +18,7 @@ app.use(morgan(logs));
 
 // parse body params and attache them to req.body
 app.use(express.json()); //Used to parse JSON bodies
-app.use(express.urlencoded()); //Parse URL-encoded bodies
+app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 
 // lets you use HTTP verbs such as PUT or DELETE
 // in places where the client doesn't support it
