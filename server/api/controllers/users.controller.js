@@ -4,10 +4,12 @@ const Users = require('../models/auth.model');
 const Endpoint = require('../models/endpoint.model');
 const Aors = require('../models/aor.model');
 const logger = require('../../config/logger');
+
 const { google } = require('googleapis');
 const authHelpers = require('../utils/authHelpers');
+
 /**
- * Create new User using ID & Password
+ * Create new User
  * @public
  */
 exports.create = async (req, res, next) => {
@@ -22,6 +24,8 @@ exports.create = async (req, res, next) => {
         _id: username,
     })
     const endpoint = new Endpoint({
+        context: "testing",
+        transport: "transport-tcp-nat",
         aors: username,
         _id: username,
         auth: username,
