@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint . --fix",
     "dev": "nodemon ./index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -23,6 +24,7 @@
     "winston": "^3.3.3"
   },
   "devDependencies": {
+    "eslint": "^7.27.0",
     "nodemon": "^1.18.10"
   }
 }

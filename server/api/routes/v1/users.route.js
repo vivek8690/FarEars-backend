@@ -4,12 +4,12 @@ const router = express.Router();
 
 // Signup using user id & pass
 router
-  .route('/register')
-  .post(controller.create);
+	.route('/register')
+	.post(controller.create);
 
 // Signup using google
-router.get("/auth/google",controller.makeAuthentication);
+router.get('/auth/google',controller.makeAuthentication);
 
-router.get("/auth/google/callback", controller.registerUser);
+router.get('/auth/google/callback', controller.registerUser);
 
 module.exports = router;
