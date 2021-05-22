@@ -255,7 +255,5 @@ RUN echo "[general]\n\
         random=yes" > /etc/asterisk/musiconhold.conf
 
 
-CMD asterisk
-
 ENTRYPOINT ["tail"]
 CMD ["-f","/dev/null"]
