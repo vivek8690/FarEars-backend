@@ -107,6 +107,25 @@ RUN echo "[general]\n\
         central24=America/Chicago|'vm-received' q 'digits/at' H N 'hours'\n\
         military=Zulu|?~@~Yvm-received' q 'digits/at' H N 'hours' 'phonetic/z_p'\n\
         european=Europe/Copenhagen|'vm-received' a d b 'digits/at' HM" > /etc/asterisk/voicemail.conf && \
+    echo ";\n\
+        ;   rtp.conf\n\
+        ;\n\
+        [general]\n\
+        rtpstart=10000\n\
+        rtpend=20000" > /etc/asterisk/rtp.conf && \
+    echo "
+        [general]\n\
+        static=yes\n\
+        writeprotect=yes\n\
+        clearglobalvars=yes\n\
+        autofallthrough=no\n\
+        \n\
+        [testing]\n\
+        \n\
+        exten => _X.,1,Set(TRYCNT=0)\n\
+        same => n(wait),Wait(1)\n\
+        same => n(dial),Dial(PJSIP/${EXTEN},20,tTrRg)\n\
+        same => n,Hangup()" > /etc/asterisk/extensions.conf && \
     echo " ;\n\
         ;   asterisk.conf\n\
         ;\n\
@@ -195,21 +214,21 @@ RUN echo "[general]\n\
         database=cel\n\
         collection=cel"> /etc/asterisk/ast_mongo.conf &&\
     echo "[settings]\n\
-        ringgroups => mongodb,$DATABASE_NAME,ring_configs\n\
-        dids => mongodb,$DATABASE_NAME,dids_configs\n\
+        ;ringgroups => mongodb,$DATABASE_NAME,ring_configs\n\
+        ;dids => mongodb,$DATABASE_NAME,dids_configs\n\
         ps_endpoints => mongodb,$DATABASE_NAME\n\
         ps_auths => mongodb,$DATABASE_NAME\n\
         ps_aors => mongodb,$DATABASE_NAME\n\
         ps_contacts => mongodb,$DATABASE_NAME\n\
         ps_registrations => mongodb,$DATABASE_NAME\n\
-        ps_endpoint_id_ips => mongodb,$DATABASE_NAME\n\
-        voicemail => mongodb,$DATABASE_NAME,voicemail_users\n\
-        extensions.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        pjsip.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        musiconhold.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        confbridge.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        voicemail.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        features.conf => mongodb,$DATABASE_NAME,ast_configs"> /etc/asterisk/extconfig.conf &&\
+        ;ps_endpoint_id_ips => mongodb,$DATABASE_NAME\n\
+        ;voicemail => mongodb,$DATABASE_NAME,voicemail_users\n\
+        ;extensions.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;pjsip.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;musiconhold.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;confbridge.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;voicemail.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;features.conf => mongodb,$DATABASE_NAME,ast_configs"> /etc/asterisk/extconfig.conf &&\
     echo "[res_pjsip]\n\
         endpoint=realtime,ps_endpoints\n\
         auth=realtime,ps_auths\n\
