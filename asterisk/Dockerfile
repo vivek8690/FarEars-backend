@@ -123,7 +123,7 @@ RUN echo "[general]\n\
         \n\
         exten => _X.,1,Set(TRYCNT=0)\n\
         same => n(wait),Wait(1)\n\
-        same => n(dial),Dial(PJSIP/${EXTEN},20,tTrRg)\n\
+        same => n(dial),Dial(PJSIP/\${EXTEN},20,tTrRg)\n\
         same => n,Hangup()" > /etc/asterisk/extensions.conf && \
     echo " ;\n\
         ;   asterisk.conf\n\
