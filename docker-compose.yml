@@ -34,4 +34,3 @@ services:
       - mongo
     volumes:
       - ./server:/app
-    restart: always
