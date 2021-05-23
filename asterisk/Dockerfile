@@ -199,8 +199,8 @@ RUN echo "[general]\n\
         protocol=tcp\n\
         bind=0.0.0.0\n\
         local_net=172.31.32.0/20\n\
-        external_media_address=13.232.239.240\n\
-        external_signaling_address=13.232.239.240" > /etc/asterisk/pjsip.conf &&\
+        external_media_address=13.233.148.169\n\
+        external_signaling_address=13.233.148.169" > /etc/asterisk/pjsip.conf &&\
     echo "[common]\n\
         \n\
         [config]\n\
