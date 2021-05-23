@@ -10,7 +10,8 @@ services:
   asterisk:
     image: ast_mongo-asterisk:16.0.0
     container_name: asterisk
-    privileged: true   
+    privileged: true
+    tty: true
     build:
       network: host
       context: ./asterisk/
