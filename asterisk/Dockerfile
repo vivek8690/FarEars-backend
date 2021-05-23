@@ -112,7 +112,7 @@ RUN echo "[general]\n\
         ;\n\
         [general]\n\
         rtpstart=10000\n\
-        rtpend=10005" > /etc/asterisk/rtp.conf && \
+        rtpend=20000" > /etc/asterisk/rtp.conf && \
     echo "[general]\n\
         static=yes\n\
         writeprotect=yes\n\
