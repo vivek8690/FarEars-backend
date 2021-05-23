@@ -197,7 +197,10 @@ RUN echo "[general]\n\
         [transport-tcp-nat]\n\
         type=transport\n\
         protocol=tcp\n\
-        bind=0.0.0.0" > /etc/asterisk/pjsip.conf &&\
+        bind=0.0.0.0\n\
+        ;local_net=192.0.2.0/24\n\
+        ;external_media_address=203.0.113.1\n\
+        ;external_signaling_address=203.0.113.1" > /etc/asterisk/pjsip.conf &&\
     echo "[common]\n\
         \n\
         [config]\n\
