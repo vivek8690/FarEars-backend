@@ -256,9 +256,7 @@ RUN echo "[general]\n\
         mode=files\n\
         directory=/var/lib/asterisk/moh\n\
         random=yes" > /etc/asterisk/musiconhold.conf && \
-    echo "asterisk;\ \n\
-        service asterisk status; \ \n
-        /bin/bash" >/root/init_ast.sh
+    echo "asterisk ;"
 
 
-ENTRYPOINT ["/bin/bash", "/root/init_ast.sh"]
+ENTRYPOINT ["asterisk", "-c"]
