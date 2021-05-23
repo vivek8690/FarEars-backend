@@ -13,7 +13,6 @@ services:
     privileged: true
     tty: true
     build:
-      network: host
       context: ./asterisk/
       dockerfile: Dockerfile
       args:
@@ -22,6 +21,7 @@ services:
         VERSION_LIBSRTP: 2.1.0
         DATABASE_HOST: mongodb://localhost:27017
         DATABASE_NAME: asterisk
+    network_mode: "host"
   nodejs:
     image: node
     container_name: node_server
