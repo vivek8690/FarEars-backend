@@ -10,6 +10,8 @@ ARG VERSION_MONGOC
 ARG VERSION_LIBSRTP
 ARG DATABASE_HOST
 ARG DATABASE_NAME
+ARG PUBLIC_IP
+ARG CIDR
 ENV DEBIAN_FRONTEND noninteractive
 
 
@@ -37,6 +39,10 @@ RUN apt-get update \
     file \
     git \
     vim
+
+RUN curl icanhazip.com > $PUBLIC_IP
+
+RUN echo $PUBLIC_IP
 
 RUN cd $HOME \
     &&  wget -nv "https://github.com/mongodb/mongo-c-driver/releases/download/$VERSION_MONGOC/mongo-c-driver-$VERSION_MONGOC.tar.gz" -O - | tar xzf - \
