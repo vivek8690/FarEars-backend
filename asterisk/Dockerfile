@@ -38,11 +38,8 @@ RUN apt-get update \
     wget \
     file \
     git \
-    vim
-
-RUN curl icanhazip.com > $PUBLIC_IP
-
-RUN echo $PUBLIC_IP
+    vim \
+    curl
 
 RUN cd $HOME \
     &&  wget -nv "https://github.com/mongodb/mongo-c-driver/releases/download/$VERSION_MONGOC/mongo-c-driver-$VERSION_MONGOC.tar.gz" -O - | tar xzf - \
@@ -95,6 +92,8 @@ RUN  cd $HOME/asterisk-$VERSION_ASTERISK && \
     make install-logrotate 
     
 RUN cp $HOME/ast_mongo/test_bench/configs/* /etc/asterisk/
+
+RUN IP=$(curl icanhazip.com)
 
 RUN echo "[general]\n\
         format=wav49|gsm|wav\n\
@@ -205,8 +204,8 @@ RUN echo "[general]\n\
         protocol=tcp\n\
         bind=0.0.0.0\n\
         local_net=172.31.32.0/20\n\
-        external_media_address=13.126.144.230\n\
-        external_signaling_address=13.126.144.230" > /etc/asterisk/pjsip.conf &&\
+        external_media_address=$IP\n\
+        external_signaling_address=$IP" > /etc/asterisk/pjsip.conf &&\
     echo "[common]\n\
         \n\
         [config]\n\
