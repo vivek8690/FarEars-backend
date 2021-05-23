@@ -11,7 +11,9 @@ services:
     image: ast_mongo-asterisk:16.0.0
     container_name: asterisk
     build:
-      network: host
+      ports:
+        - "5060:5060"
+        - "10000-10005:10000-10005/udp"
       context: ./asterisk/
       dockerfile: Dockerfile
       args:
