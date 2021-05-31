@@ -251,6 +251,29 @@ RUN echo "[general]\n\
         messages => notice,warning,error\n\
         full => notice,warning,error,verbose,dtmf,fax,verbose(4)" > /etc/asterisk/logger.conf &&\
     echo "[general]\n\
+        transferdigittimeout => 20\n\
+        \n\
+        [featuremap]\n\
+        blindxfer => #1\n\
+        atxfer => *2\n\
+        parkcall => #72\n\
+        \n\
+        [applicationmap]\n\
+        nway-start-caller => *0,self/caller,Gosub(subNwaystart,start,1)\n\
+        nway-start-callee => *1,peer/callee,Gosub(subNwaystart,start,1)" > /etc/asterisk/features.conf && \
+    echo "[general]\n\
+        [default_user]\n\
+        type=user\n\
+        [default_bridge]\n\
+        type=bridge\n\
+        sound_only_person=conf-userswilljoin\n\
+        sound_kicked=silence/1\n\
+        sound_only_person=silence/1\n\
+        [volume_ctrl_menu]\n\
+        type=menu\n\
+        *0=dialplan_exec(subNwayinvite,s,1)\n\
+        *1=dialplan_exec(subNwayinvite,s,1)" > /etc/asterisk/confbridge.conf && \
+    echo "[general]\n\
         ;enabled = yes ; When set to yes, statsd support is enabled \n\
         ;server = 127.0.0.1	; server[:port] of statsd server to use. \n\
         ;prefix =			; Prefix to prepend to all metrics \n\
