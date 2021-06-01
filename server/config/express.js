@@ -8,9 +8,9 @@ const { logs } = require('./vars');
 const error = require('../api/middlewares/error');
 
 /**
-* Express instance
-* @public
-*/
+ * Express instance
+ * @public
+ */
 const app = express();
 
 // request logging. dev: console | production: file
@@ -18,7 +18,7 @@ app.use(morgan(logs));
 
 // parse body params and attache them to req.body
 app.use(express.json()); //Used to parse JSON bodies
-app.use(express.urlencoded()); //Parse URL-encoded bodies
+app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
 
 // lets you use HTTP verbs such as PUT or DELETE
 // in places where the client doesn't support it
@@ -31,7 +31,7 @@ app.use(helmet());
 app.use(cors());
 
 // mount api v1 routes
-app.use('/v1', routes);
+app.use('/api/v1', routes);
 
 // if error is not an instanceOf APIError, convert it.
 app.use(error.converter);

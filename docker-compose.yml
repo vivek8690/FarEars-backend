@@ -1,12 +1,5 @@
 version: '3'
 services:
-  mongo:
-    image: mongo
-    container_name: ast_mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - /data/db:/data/db
   asterisk:
     image: ast_mongo-asterisk:16.0.0
     container_name: asterisk
@@ -19,7 +12,7 @@ services:
         VERSION_ASTERISK: 16.0.0
         VERSION_MONGOC: 1.13.0
         VERSION_LIBSRTP: 2.1.0
-        DATABASE_HOST: mongodb://ast_mongo:27017
+        DATABASE_HOST: mongodb+srv://sankalp:sankalp27@cluster0.eqbpw.mongodb.net/asterisk
         DATABASE_NAME: asterisk
   nodejs:
     image: node
@@ -30,8 +23,5 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    depends_on:
-      - mongo
     volumes:
       - ./server:/app
-    restart: always

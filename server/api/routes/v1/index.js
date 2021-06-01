@@ -1,15 +1,16 @@
 const express = require('express');
-const mongoose = require('mongoose');
-
 const router = express.Router();
+const userRoute = require('../v1/users.route');
+
 /**
  * GET v1/status
  */
 router.get('/status', async (req, res) => {
-    res.send({
-        mongo: mongoose.connection.readyState === 1 ? 'Connected to server.' : 'Not connected to server.',
-        version: process.env.VERSION,
-    });
+	res.send({
+		version: process.env.VERSION,
+	});
 });
+
+router.use('/users', userRoute);
 
 module.exports = router;
