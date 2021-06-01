@@ -1,10 +1,10 @@
-version: '3'
+version: '3.4'
 services:
   asterisk:
     image: ast_mongo-asterisk:16.0.0
     container_name: asterisk
-    ports:
-      - "5060:5060"
+    privileged: true
+    tty: true
     build:
       context: ./asterisk/
       dockerfile: Dockerfile
@@ -14,6 +14,7 @@ services:
         VERSION_LIBSRTP: 2.1.0
         DATABASE_HOST: mongodb+srv://sankalp:sankalp27@cluster0.eqbpw.mongodb.net/asterisk
         DATABASE_NAME: asterisk
+    network_mode: "host"
   nodejs:
     image: node
     container_name: node_server

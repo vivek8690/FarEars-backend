@@ -10,6 +10,8 @@ ARG VERSION_MONGOC
 ARG VERSION_LIBSRTP
 ARG DATABASE_HOST
 ARG DATABASE_NAME
+ARG PUBLIC_IP
+ARG CIDR
 ENV DEBIAN_FRONTEND noninteractive
 
 
@@ -36,7 +38,8 @@ RUN apt-get update \
     wget \
     file \
     git \
-    vim
+    vim \
+    curl
 
 RUN cd $HOME \
     &&  wget -nv "https://github.com/mongodb/mongo-c-driver/releases/download/$VERSION_MONGOC/mongo-c-driver-$VERSION_MONGOC.tar.gz" -O - | tar xzf - \
@@ -107,6 +110,24 @@ RUN echo "[general]\n\
         central24=America/Chicago|'vm-received' q 'digits/at' H N 'hours'\n\
         military=Zulu|?~@~Yvm-received' q 'digits/at' H N 'hours' 'phonetic/z_p'\n\
         european=Europe/Copenhagen|'vm-received' a d b 'digits/at' HM" > /etc/asterisk/voicemail.conf && \
+    echo ";\n\
+        ;   rtp.conf\n\
+        ;\n\
+        [general]\n\
+        rtpstart=10000\n\
+        rtpend=20000" > /etc/asterisk/rtp.conf && \
+    echo "[general]\n\
+        static=yes\n\
+        writeprotect=yes\n\
+        clearglobalvars=yes\n\
+        autofallthrough=no\n\
+        \n\
+        [testing]\n\
+        \n\
+        exten => _X.,1,Set(TRYCNT=0)\n\
+        same => n(wait),Wait(1)\n\
+        same => n(dial),Dial(PJSIP/\${EXTEN},20,tTrRg)\n\
+        same => n,Hangup()" > /etc/asterisk/extensions.conf && \
     echo " ;\n\
         ;   asterisk.conf\n\
         ;\n\
@@ -179,7 +200,10 @@ RUN echo "[general]\n\
         [transport-tcp-nat]\n\
         type=transport\n\
         protocol=tcp\n\
-        bind=0.0.0.0" > /etc/asterisk/pjsip.conf &&\
+        bind=0.0.0.0\n\
+        local_net=172.31.32.0/20\n\
+        external_media_address=$(curl ifconfig.me)\n\
+        external_signaling_address=$(curl ifconfig.me)" > /etc/asterisk/pjsip.conf &&\
     echo "[common]\n\
         \n\
         [config]\n\
@@ -195,21 +219,21 @@ RUN echo "[general]\n\
         database=cel\n\
         collection=cel"> /etc/asterisk/ast_mongo.conf &&\
     echo "[settings]\n\
-        ringgroups => mongodb,$DATABASE_NAME,ring_configs\n\
-        dids => mongodb,$DATABASE_NAME,dids_configs\n\
+        ;ringgroups => mongodb,$DATABASE_NAME,ring_configs\n\
+        ;dids => mongodb,$DATABASE_NAME,dids_configs\n\
         ps_endpoints => mongodb,$DATABASE_NAME\n\
         ps_auths => mongodb,$DATABASE_NAME\n\
         ps_aors => mongodb,$DATABASE_NAME\n\
         ps_contacts => mongodb,$DATABASE_NAME\n\
         ps_registrations => mongodb,$DATABASE_NAME\n\
-        ps_endpoint_id_ips => mongodb,$DATABASE_NAME\n\
-        voicemail => mongodb,$DATABASE_NAME,voicemail_users\n\
-        extensions.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        pjsip.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        musiconhold.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        confbridge.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        voicemail.conf => mongodb,$DATABASE_NAME,ast_configs\n\
-        features.conf => mongodb,$DATABASE_NAME,ast_configs"> /etc/asterisk/extconfig.conf &&\
+        ;ps_endpoint_id_ips => mongodb,$DATABASE_NAME\n\
+        ;voicemail => mongodb,$DATABASE_NAME,voicemail_users\n\
+        ;extensions.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;pjsip.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;musiconhold.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;confbridge.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;voicemail.conf => mongodb,$DATABASE_NAME,ast_configs\n\
+        ;features.conf => mongodb,$DATABASE_NAME,ast_configs"> /etc/asterisk/extconfig.conf &&\
     echo "[res_pjsip]\n\
         endpoint=realtime,ps_endpoints\n\
         auth=realtime,ps_auths\n\
@@ -227,6 +251,29 @@ RUN echo "[general]\n\
         messages => notice,warning,error\n\
         full => notice,warning,error,verbose,dtmf,fax,verbose(4)" > /etc/asterisk/logger.conf &&\
     echo "[general]\n\
+        transferdigittimeout => 20\n\
+        \n\
+        [featuremap]\n\
+        blindxfer => #1\n\
+        atxfer => *2\n\
+        parkcall => #72\n\
+        \n\
+        [applicationmap]\n\
+        nway-start-caller => *0,self/caller,Gosub(subNwaystart,start,1)\n\
+        nway-start-callee => *1,peer/callee,Gosub(subNwaystart,start,1)" > /etc/asterisk/features.conf && \
+    echo "[general]\n\
+        [default_user]\n\
+        type=user\n\
+        [default_bridge]\n\
+        type=bridge\n\
+        sound_only_person=conf-userswilljoin\n\
+        sound_kicked=silence/1\n\
+        sound_only_person=silence/1\n\
+        [volume_ctrl_menu]\n\
+        type=menu\n\
+        *0=dialplan_exec(subNwayinvite,s,1)\n\
+        *1=dialplan_exec(subNwayinvite,s,1)" > /etc/asterisk/confbridge.conf && \
+    echo "[general]\n\
         ;enabled = yes ; When set to yes, statsd support is enabled \n\
         ;server = 127.0.0.1	; server[:port] of statsd server to use. \n\
         ;prefix =			; Prefix to prepend to all metrics \n\
@@ -234,10 +281,8 @@ RUN echo "[general]\n\
     echo "[default]\n\
         mode=files\n\
         directory=/var/lib/asterisk/moh\n\
-        random=yes" > /etc/asterisk/musiconhold.conf
+        random=yes" > /etc/asterisk/musiconhold.conf && \
+    echo "asterisk ;"
 
 
-CMD asterisk -c > /dev/null
-
-ENTRYPOINT ["tail"]
-CMD ["-f","/dev/null"]
+ENTRYPOINT ["asterisk", "-c"]
