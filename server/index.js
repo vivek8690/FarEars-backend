@@ -11,7 +11,7 @@ mongoose.connect();
 app.listen(port, () => logger.info(`server started on port ${port} (${env})`));
 
 /**
-* Exports express
-* @public
-*/
+ * Exports express
+ * @public
+ */
 module.exports = app;

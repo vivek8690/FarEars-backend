@@ -28,9 +28,8 @@ exports.handler = handler;
  * If error is not an instanceOf APIError, convert it.
  * @public
  */
-exports.converter = (err, req, res) => {
+exports.converter = (err, req, res, next) => {
 	let convertedError = err;
-
 	if (err instanceof expressValidation.ValidationError) {
 		convertedError = new APIError({
 			message: 'Validation Error',
@@ -38,15 +37,16 @@ exports.converter = (err, req, res) => {
 			status: err.status,
 			stack: err.stack,
 		});
+		return handler(convertedError, req, res);
 	} else if (!(err instanceof APIError)) {
 		convertedError = new APIError({
 			message: err.message,
 			status: err.status,
 			stack: err.stack,
 		});
+		return handler(convertedError, req, res);
 	}
-
-	return handler(convertedError, req, res);
+	next();
 };
 
 /**

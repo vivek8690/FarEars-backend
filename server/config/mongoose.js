@@ -14,16 +14,18 @@ if (env === 'development') {
 }
 
 /**
-* Connect to mongo db
-*
-* @returns {object} Mongoose connection
-* @public
-*/
+ * Connect to mongo db
+ *
+ * @returns {object} Mongoose connection
+ * @public
+ */
 exports.connect = () => {
 	mongoose.connect(mongo.uri, {
 		keepAlive: 1,
 		useNewUrlParser: true,
-		useUnifiedTopology: true
+		useUnifiedTopology: true,
+		useFindAndModify: false,
+		useCreateIndex: true,
 	});
 	return mongoose.connection;
 };

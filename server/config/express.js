@@ -8,9 +8,9 @@ const { logs } = require('./vars');
 const error = require('../api/middlewares/error');
 
 /**
-* Express instance
-* @public
-*/
+ * Express instance
+ * @public
+ */
 const app = express();
 
 // request logging. dev: console | production: file
@@ -31,7 +31,7 @@ app.use(helmet());
 app.use(cors());
 
 // mount api v1 routes
-app.use('/v1', routes);
+app.use('/api/v1', routes);
 
 // if error is not an instanceOf APIError, convert it.
 app.use(error.converter);

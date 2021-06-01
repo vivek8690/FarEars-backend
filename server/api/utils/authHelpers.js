@@ -11,7 +11,6 @@ const googleConfig = {
 	redirect: process.env.GOOGLE_AUTH_REDIRECT_URL, // this must match your google api settings
 };
 
-
 const createConnection = () => {
 	return new google.auth.OAuth2(
 		googleConfig.clientId,
@@ -23,6 +22,7 @@ const createConnection = () => {
 const urlGoogle = () => {
 	const auth = createConnection();
 	const url = getConnectionUrl(auth);
+	console.log(url, 'url');
 	return url;
 };
 
@@ -30,11 +30,12 @@ const getConnectionUrl = (auth) => {
 	return auth.generateAuthUrl({
 		access_type: 'offline',
 		prompt: 'consent',
-		scope: defaultScope
+		scope: defaultScope,
 	});
 };
 
-exports.authConfig = {
+module.exports = {
 	googleConfig,
-	urlGoogle
+	urlGoogle,
+	createConnection,
 };
