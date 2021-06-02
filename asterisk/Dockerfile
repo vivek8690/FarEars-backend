@@ -281,8 +281,7 @@ RUN echo "[general]\n\
     echo "[default]\n\
         mode=files\n\
         directory=/var/lib/asterisk/moh\n\
-        random=yes" > /etc/asterisk/musiconhold.conf && \
-    echo "asterisk ;"
+        random=yes" > /etc/asterisk/musiconhold.conf
 
 
 ENTRYPOINT ["asterisk", "-c"]
