@@ -12,7 +12,7 @@ services:
         VERSION_ASTERISK: 16.0.0
         VERSION_MONGOC: 1.13.0
         VERSION_LIBSRTP: 2.1.0
-        DATABASE_HOST: mongodb+srv://sankalp:sankalp27@cluster0.eqbpw.mongodb.net/asterisk
+        DATABASE_HOST: mongodb://sankalp:sankalp27@cluster0-shard-00-00.eqbpw.mongodb.net:27017,cluster0-shard-00-02.eqbpw.mongodb.net:27017,cluster0-shard-00-01.eqbpw.mongodb.net:27017/asterisk?authSource=admin&replicaSet=atlas-10sic2-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true
         DATABASE_NAME: asterisk
     network_mode: "host"
   nodejs:
