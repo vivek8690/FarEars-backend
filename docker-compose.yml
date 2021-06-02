@@ -17,7 +17,7 @@ services:
       dockerfile: Dockerfile
       args:
         VERSION_ASTERISK: 16.0.0
-        VERSION_MONGOC: 1.13.0
+        VERSION_MONGOC: 1.17.5
         VERSION_LIBSRTP: 2.1.0
         DATABASE_HOST: mongodb://localhost:27017
         DATABASE_NAME: asterisk
