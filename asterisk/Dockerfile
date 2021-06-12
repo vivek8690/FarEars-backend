@@ -123,11 +123,119 @@ RUN echo "[general]\n\
         autofallthrough=no\n\
         \n\
         [testing]\n\
-        \n\
         exten => _X.,1,Set(TRYCNT=0)\n\
+        same => n,Set(__DYNAMIC_FEATURES=nway-start-caller#nway-start-callee)\n\
+        same => n,Set(CALLTOEXT=\${EXTEN})\n\
+        same => n,Set(CALLFROMEXT=\${CALLERID(num)})\n\
+        same => n,Gotoif(\$[\${TRYCNT} >= 1]?wait:dial)\n\
         same => n(wait),Wait(1)\n\
         same => n(dial),Dial(PJSIP/\${EXTEN},20,tTrRg)\n\
-        same => n,Hangup()" > /etc/asterisk/extensions.conf && \
+        same => n,Gotoif(\$[\"\${JOIN_CONFERENCE}\" = \"yes\"]?confcall:simplecall)\n\
+        same => n(confcall),Goto(\${CONFNO},1)\n\
+        same => n(simplecall),Goto(s-\${DIALSTATUS},1)\n\
+        same => n,Hangup()\n\
+        \n\
+
+
+        exten => *0000,1,VoiceMailMain(\${CALLERID(num)})\n\
+        same => n,Hangup()\n\
+        \n\
+        exten => _00X.,1,NoOp(conf)\n\
+        same => n,ConfBridge(\${EXTEN},default_bridge,default_user)\n\
+        \n\
+        exten => _0X.,1,NoOp(conf)\n\
+        same => n,Answer\n\
+        same => n,Set(__DYNAMIC_FEATURES=nway-start#nway-ok)\n\
+        same => n,Set(CONFNO=\${EXTEN})\n\
+        same => n,ConfBridge(\${EXTEN},default_bridge,default_user,volume_ctrl_menu)\n\
+        same => n,Hangup()\n\
+        \n\
+        exten => s-ANSWER,1,NoOp(answered)\n\
+        same => n,Hangup()\n\
+        \n\
+        exten => s-CANCEL,1,NoOp(canceled)\n\
+        same => n,Hangup()\n\
+        \n\
+        exten => s-INVALIDARGS,1,NoOp(invalidargs)\n\
+        same => n,Hangup()\n\
+        \n\
+        exten => s-NOANSWER,1,Playback(number-not-answering)\n\
+        same => n,voicemail(\${CALLTOEXT},u)\n\
+        same => n,Hangup()\n\
+        \n\
+        exten => s-CONGESTION,1,Set(i=1)\n\
+        same => n,While(\$[\${i} < 8])\n\
+        same => n,Playback(beep)\n\
+        same => n,Set(i=\$[\${i} + 1])\n\
+        same => n,EndWhile\n\
+        same => n,Hangup()\n\
+        \n\
+        exten => s-CHANUNAVAIL,1,Set(TRYCNT=\$[\${TRYCNT} + 1])\n\
+        same => n,Playback(beeperr)\n\
+        same => n,Gotoif(\$[\${TRYCNT} > 10]?cancel)\n\
+        same => n,Gotoif(\$[\${TRYCNT} > 1]?goup)\n\
+        same => n,Set(CURL_RESULT=\${CURL(http://localhost:3000/api/send-push-from-asterisk?callToExt=\${CALLTOEXT}&callFromExt=\${CALLFROMEXT})})\n\
+        same => n,GotoIf(\$[\"\${CURL_RESULT}\" = \"true\"]?goup:cancel)\n\
+        same => n(goup),GoTo(\${CALLTOEXT},2)\n\
+        same => n(cancel),voicemail(\${CALLTOEXT},u)\n\
+        same => n,Hangup()\n\
+        \n\
+        exten => s-BUSY,1,voicemail(\${CALLTOEXT},b)\n\
+        same => n,hangup()\n\
+        \n\
+        [subNwaystart]\n\
+        exten => start,1,Set(CONFNO=0\${CALLERID(num)})\n\
+        same => n,Set(__DYNAMIC_FEATURES=nway-start-caller#nway-start-callee)\n\
+        same => n,ChannelRedirect(\${BRIDGEPEER},testing,\${CONFNO},1)\n\
+        same => n,Set(JOIN_CONFERENCE=yes)\n\
+        same => n,Return()\n\
+        \n\
+        [subNwayinvite]\n\
+        exten => s,1,Set(CONFINVITECNT=0)\n\
+        same => n,Read(DEST,vm-enter-num-to-call,,i,1,5)\n\
+        same => n,Set(CALLERNAME=\${CALLERID(name)})\n\
+        same => n,Set(ISCONF=\${REGEX(\"Conference\" \${CALLERNAME})})\n\
+        same => n,Gotoif(\$[\"\${ISCONF}\" = \"0\"]?setcallid:todial)\n\
+        same => n(setcallid),Set(CALLERNAME=\${CALLERNAME} - Conference)\n\
+        same => n,Set(CALLERID(name)=\${CALLERNAME})\n\
+        same => n(todial),Wait(1)\n\
+        same => n,Dial(PJSIP/\${DEST},20,tTrRg)\n\
+        same => n,Set(CALLFROMEXT=\${CALLERID(num)})\n\
+        same => n,Set(CALLTOEXT=\${DEST})\n\
+        same => n,Goto(s-\${DIALSTATUS},1)\n\
+        same => n,ChannelRedirect(\${DIALEDPEERNAME},testing,\${CONFNO},1)\n\
+        \n\
+        exten => s-ANSWER,1,NoOp(answered)\n\
+        same => n,ChannelRedirect(\${DIALEDPEERNAME},testing,\${CONFNO},1)\n\
+        \n\
+        exten => s-CANCEL,1,NoOp(canceled)\n\
+        same => n,ChannelRedirect(\${DIALEDPEERNAME},testing,\${CONFNO},1)\n\
+        \n\
+        exten => s-INVALIDARGS,1,NoOp(invalidargs)\n\
+        same => n,ChannelRedirect(\${DIALEDPEERNAME},testing,\${CONFNO},1)\n\
+        \n\
+        exten => s-NOANSWER,1,Playback(number-not-answering)\n\
+        same => n,Playback(please-try-call-later)\n\
+        same => n,ChannelRedirect(\${DIALEDPEERNAME},testing,\${CONFNO},1)\n\
+        \n\
+        exten => s-CONGESTION,1,Set(i=1)\n\
+        same => n,While(\$[\${i} < 8])\n\
+        same => n,Playback(beep)\n\
+        same => n,Set(i=\$[\${i} + 1])\n\
+        same => n,EndWhile\n\
+        same => n,ChannelRedirect(\${DIALEDPEERNAME},testing,\${CONFNO},1)\n\
+        \n\
+        exten => s-BUSY,1,Playback(number-not-answering)\n\
+        same => n,Playback(please-try-call-later)\n\
+        same => n,ChannelRedirect(\${DIALEDPEERNAME},testing,\${CONFNO},1)\n\
+        \n\
+        exten => s-CHANUNAVAIL,1,Set(CONFINVITECNT=\$[\${CONFINVITECNT} + 1])\n\
+        same => n,Gotoif($[\${CONFINVITECNT} > 10]?cancel)\n\
+        same => n,Gotoif($[\${CONFINVITECNT} > 1]?goup)\n\
+        same => n,Set(CURL_RESULT=\${CURL(http://localhost:3000/api/send-push-from-asterisk?callToExt=\${CALLTOEXT}&callFromExt=\${CALLFROMEXT})})\n\
+        same => n,GotoIf($[\"\${CURL_RESULT}\" = \"true\"]?goup:cancel)\n\
+        same => n(goup),GoTo(s,4)\n\
+        same => n,ChannelRedirect(\${DIALEDPEERNAME},testing,\${CONFNO},1)" > /etc/asterisk/extensions.conf && \
     echo " ;\n\
         ;   asterisk.conf\n\
         ;\n\
@@ -244,12 +352,14 @@ RUN echo "[general]\n\
         [res_pjsip_outbound_registration]\n\
         registration=realtime,ps_registrations" > /etc/asterisk/sorcery.conf &&\
     echo "[general]\n\
+        exce_after_rotate=gzip -9 ${filename}.2;\n\
+        dateformat = %F %T\n\
         rotatestrategy = rotate\n\
         \n\
         [logfiles]\n\
+        security => security\n\
         console => notice,warning,error\n\
-        messages => notice,warning,error\n\
-        full => notice,warning,error,verbose,dtmf,fax,verbose(4)" > /etc/asterisk/logger.conf &&\
+        messages => notice,warning,error" > /etc/asterisk/logger.conf &&\
     echo "[general]\n\
         transferdigittimeout => 20\n\
         \n\
