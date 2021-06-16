@@ -30,12 +30,11 @@ services:
       - ./server:/app
   asterisk-ari:
     image: node
-    container_name: node_server
-    ports:
-      - "4000:4000"
+    container_name: asterisk-ari
+    network_mode: "host"
     command: npm run dev
     build:
-      context: ./server
+      context: ./asterisk-ari
       dockerfile: Dockerfile
     volumes:
-      - ./asterisk-ari:/app
+      - ./asterisk-ari:/usr/src/app

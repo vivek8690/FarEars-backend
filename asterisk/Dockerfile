@@ -135,8 +135,10 @@ RUN echo "[general]\n\
         same => n(simplecall),Goto(s-\${DIALSTATUS},1)\n\
         same => n,Hangup()\n\
         \n\
-
-
+        exten => _XXXXX,1,Noop()\n\
+        same => n,Stasis(ari-test)\n\
+        same => n,Hangup()\n\
+        \n\
         exten => *0000,1,VoiceMailMain(\${CALLERID(num)})\n\
         same => n,Hangup()\n\
         \n\
