@@ -28,3 +28,14 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./server:/app
+  asterisk-ari:
+    image: node
+    container_name: node_server
+    ports:
+      - "4000:4000"
+    command: npm run dev
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    volumes:
+      - ./asterisk-ari:/app
