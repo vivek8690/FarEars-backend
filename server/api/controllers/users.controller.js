@@ -1,6 +1,6 @@
 const MIN_EXT_RANGE = 1000;
 const MAX_EXT_RANGE = 9999;
-const { BCRYPT_SALT: bcryptSalt } = require("../../config/vars");
+const { BCRYPT_SALT } = process.env;
 
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
