@@ -10,7 +10,11 @@ const {
 const {
   uploadExtensions,
   getExtensions,
+  getUserExtensions,
 } = require("../../controllers/extensions.controller");
+
+// TODO: Check User Auth Later.
+router.get("/", getUserExtensions);
 
 router.post(
   "/csv",
