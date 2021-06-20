@@ -21,5 +21,5 @@ function getClientObj() {
 
 module.exports = {
   holdingBridge,
-  getClientObj
+  getClientObj,
 };

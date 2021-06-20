@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 services:
   asterisk:
     image: ast_mongo-asterisk:16.0.0
