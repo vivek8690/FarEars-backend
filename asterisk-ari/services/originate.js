@@ -92,12 +92,15 @@ async function moveToMixingBridge(dialed, mixingBridge) {
       dialed.name,
       mixingBridge.id
     );
+    if(mixingBridge.channels.length == 0){
+      console.log('only single participant left destroying bridge');
+      mixingBridge.destroy(function (err) {
+        if (err) {
+          throw err;
+        }
+      });
+    }
 
-    // mixingBridge.destroy(function (err) {
-    //   if (err) {
-    //     throw err;
-    //   }
-    // });
   }
 };
 

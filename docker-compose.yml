@@ -38,3 +38,5 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./asterisk-ari:/usr/src/app
+    depends_on:
+      - asterisk
