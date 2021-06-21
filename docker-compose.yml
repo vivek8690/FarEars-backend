@@ -32,6 +32,8 @@ services:
     image: node
     container_name: asterisk-ari
     network_mode: "host"
+    ports:
+      - "4000:4000"
     command: npm run dev
     build:
       context: ./asterisk-ari
