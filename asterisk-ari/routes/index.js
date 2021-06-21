@@ -7,6 +7,7 @@ router.get("/invite", async (req, res) => {
   to.map(async (obj) => {
     await inviteToBridge(obj, to.join("-"));
   });
+
   res.send({
     list: "created",
   });
