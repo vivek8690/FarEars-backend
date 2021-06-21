@@ -1,4 +1,4 @@
-version: '3.4'
+version: "3.4"
 services:
   asterisk:
     image: ast_mongo-asterisk:16.0.0
@@ -33,6 +33,8 @@ services:
     container_name: asterisk-ari
     network_mode: "host"
     command: npm run dev
+    ports:
+      - "4000:4000"
     build:
       context: ./asterisk-ari
       dockerfile: Dockerfile
