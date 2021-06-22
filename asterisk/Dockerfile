@@ -197,7 +197,7 @@ RUN echo "[general]\n\
         \n\
         [transport-tcp-nat]\n\
         type=transport\n\
-        protocol=udp\n\
+        protocol=tcp\n\
         bind=0.0.0.0\n\
         local_net=172.31.32.0/20\n\
         external_media_address=$(curl ifconfig.me)\n\
