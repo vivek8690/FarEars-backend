@@ -27,7 +27,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     volumes:
-      - ./server:/app
+      - ./server:/usr/src/app
   asterisk-ari:
     image: node
     container_name: asterisk-ari

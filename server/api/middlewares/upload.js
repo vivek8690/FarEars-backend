@@ -13,8 +13,8 @@ var storage = multer.diskStorage({
     cb(null, __basedir + "/static/extensions/");
   },
   filename: (req, file, cb) => {
-    let userName = req.user.extension;
-    let fileName = `${Date.now()}-${userName}-${file.originalname}`;
+    // let userName = req.user.extension;
+    let fileName = `${Date.now()}-${file.originalname}`;
     req.fileName = fileName;
     cb(null, fileName);
   },

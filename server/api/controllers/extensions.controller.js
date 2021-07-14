@@ -32,12 +32,13 @@ const uploadExtensions = async (req, res, next) => {
       .on("end", async () => {
         const session = await mongoose.startSession();
         await session.startTransaction();
-        try {
+        // try {
           let auths = [],
             endpoint = [],
             aors = [];
           auths = users.map((el) => {
-            let plainText = el.name + ":" + "asterisk" + ":" + el.password;
+            // console.log(el.extension);
+            let plainText = el.extension + ":" + "asterisk" + ":" + el.extension;
             var md5Hash = crypto
               .createHash("md5")
               .update(plainText)
@@ -64,45 +65,49 @@ const uploadExtensions = async (req, res, next) => {
           await PSAuth.insertMany(auths);
           await PSAors.insertMany(aors);
           await PSEndpoint.insertMany(endpoints);
-          const fileContent = await fs.readFileSync(path);
-          const s3Params = {
-            Bucket: process.env.AWS_S3_BUCKET,
-            Key: req.user.extension,
-            Body: fileContent,
-            ACL: "public-read",
-          };
-
-          const deleteParams = {
-            Bucket: process.env.AWS_S3_BUCKET,
-            Key: req.user.extension,
-          };
-
-          try {
-            let delData = await bucket.deleteObjects(deleteParams).promise();
-          } catch (er) {
-            // do nothing because
-          }
-
-          bucket.upload(s3Params, (err, data) => {
-            if (err) {
-              next(err, req, res);
-            }
-
-            fs.unlink(path, async function (err) {
-              if (err) {
-                next(err, req, res);
-              }
-              await session.commitTransaction();
-              await session.endSession();
-              return res.status(httpStatus.CREATED).send({
+        //   const fileContent = await fs.readFileSync(path);
+        //   const s3Params = {
+        //     Bucket: process.env.AWS_S3_BUCKET,
+        //     Key: req.user.extension,
+        //     Body: fileContent,
+        //     ACL: "public-read",
+        //   };
+        //
+        //   const deleteParams = {
+        //     Bucket: process.env.AWS_S3_BUCKET,
+        //     Key: req.user.extension,
+        //   };
+        //
+        //   try {
+        //     let delData = await bucket.deleteObjects(deleteParams).promise();
+        //   } catch (er) {
+        //     // do nothing because
+        //   }
+        //
+        //   bucket.upload(s3Params, (err, data) => {
+        //     if (err) {
+        //       next(err, req, res);
+        //     }
+        //
+        //     fs.unlink(path, async function (err) {
+        //       if (err) {
+        //         next(err, req, res);
+        //       }
+        //       await session.commitTransaction();
+        //       await session.endSession();
+        //       return res.status(httpStatus.CREATED).send({
+        //         success: true,
+        //         message: "Data uploaded Successfully",
+        //       });
+        //     });
+        //   });
+        // } catch (err) {
+        //   next(err, req, res);
+        // }
+        return res.status(httpStatus.CREATED).send({
                 success: true,
                 message: "Data uploaded Successfully",
               });
-            });
-          });
-        } catch (err) {
-          next(err, req, res);
-        }
       });
   } catch (error) {
     next(error, req, res);

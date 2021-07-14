@@ -14,8 +14,8 @@ const {
 
 router.post(
   "/csv",
-  validateUser,
-  isUserVerified,
+  // validateUser,
+  // isUserVerified,
   uploadFile.single("file"),
   uploadExtensions
 );
