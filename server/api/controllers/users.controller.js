@@ -1,312 +1,330 @@
-const MIN_EXT_RANGE = 1000;
+const MIN_EXT_RANGE = 1001;
 const MAX_EXT_RANGE = 9999;
 const { BCRYPT_SALT } = process.env;
 
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
-const { google } = require("googleapis");
 const bcrypt = require("bcrypt");
-// const logger = require('../../config/logger');
-
-const { PSAors, PSAuth, PSEndpoint, OTPModel, Users } = require("../models");
-
-const { sendSMS } = require("../services");
+const randomize = require("randomatic");
 
 const {
-  getRandomNumber,
-  createConnection,
-  urlGoogle,
-  createToken,
-} = require("../utils");
+  PSAors,
+  PSAuth,
+  PSEndpoint,
+  OTPModel,
+  Users,
+  InviteFriend,
+  Friends,
+  Groups,
+} = require("../models");
 
-const makeAuthentication = async (req, res) => {
-  return res.redirect(urlGoogle());
-};
+const { sendEmail } = require("../services");
 
-const registerUser = async (req, res, next) => {
-  if (req.query.error) {
-    return res.status(httpStatus.BAD_REQUEST).send({
-      message: "Invalid User Credentials.",
-      data: null,
-      status: false,
+const { getRandomNumber, createToken } = require("../utils");
+
+const sendVerificationEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const otp = randomize("000000");
+    let emailStatus = await sendEmail({
+      to: email,
+      subject: "RogerThat Account Verification",
+      html: `OTP For Account Verification is ${otp}`,
+      text: otp,
     });
-  } else {
-    let { code } = req.query;
 
-    if (!code) {
+    if (emailStatus.accepted && emailStatus.accepted.indexOf(email) == -1) {
       return res.send({
-        message: "Invalid User Credentials.",
-        data: null,
-        status: false,
+        message: "Technical error while sending email, please try again.",
       });
     }
 
-    const oauth2Client = createConnection();
+    const dataToHash = `${otp}${email}`;
+    let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
+    let hash = await bcrypt.hash(dataToHash, salt);
 
-    let { tokens } = await oauth2Client.getToken(code);
+    await OTPModel.findOneAndUpdate(
+      { email },
+      { otp: hash, email },
+      { new: true, upsert: true }
+    );
+    return res.send({ message: "Verification Email Has Been Sent" });
+  } catch (e) {
+    return res.send({ message: "Failed to send verification email" });
+  }
+};
 
-    oauth2Client.setCredentials({ access_token: tokens.access_token });
+const verifyAccount = async (req, res, next) => {
+  const session = await mongoose.startSession();
+  await session.startTransaction();
+  try {
+    let { otp, email } = req.body;
+    let user = await Users.findOne({ email });
+    if (user && user.is_verified) {
+      await session.abortTransaction();
+      session.endSession();
 
-    let oauth2 = google.oauth2({ auth: oauth2Client, version: "v2" });
+      return res.send({ message: "You are already verified" });
+    }
+    let otpData = await OTPModel.findOne({ email });
+    if (!otpData) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.send({ message: "OTP Does not match or Does not exists" });
+    }
+    if (otpData && otpData.email == email) {
+      let comparable = `${otp}${email}`;
+      let isSuccess = await bcrypt.compare(comparable, otpData.otp);
+      if (isSuccess) {
+        user.is_verified = true;
 
-    let { data } = await oauth2.userinfo.get();
-
-    let user = await Users.findOne({ email: data.email });
-
-    if (user && user.email) {
-      let jwtAuthToken = await createToken(user.extension);
-
-      const filterUser = { email: data.email, extension: user.extension };
-
-      const updateUserObject = {
-        google_uid: user.id,
-        google_access_token: tokens.access_token,
-        auth_token: jwtAuthToken,
-      };
-
-      user = await Users.findOneAndUpdate(filterUser, updateUserObject, {
-        new: true,
-      });
-
-      return res.status(200).send({
-        success: true,
-        message: "User SignIn Successfully.",
-        data: user,
-      });
-    } else {
-      let allRegisteredExt = await PSEndpoint.find({}).select("_id");
-      allRegisteredExt = allRegisteredExt.map((ext) => parseInt(ext._id));
-      let extension = MIN_EXT_RANGE;
-      for (let i = MIN_EXT_RANGE; i < MAX_EXT_RANGE; i++) {
-        if (allRegisteredExt.indexOf(i) == -1) {
-          extension = i;
-          break;
+        let allRegisteredExt = await PSEndpoint.find({}).select("_id");
+        allRegisteredExt = allRegisteredExt.map((ext) => parseInt(ext._id));
+        let extension = MIN_EXT_RANGE;
+        for (let i = MIN_EXT_RANGE; i < MAX_EXT_RANGE; i++) {
+          if (allRegisteredExt.indexOf(i) == -1) {
+            extension = i;
+            break;
+          }
         }
-      }
 
-      const jwtAuthToken = await createToken(extension);
+        user.extension = extension;
 
-      const user = new Users({
-        name: data.name,
-        google_uid: data.id,
-        email: data.email,
-        profile_photo: data.picture,
-        google_access_token: tokens.access_token,
-        auth_token: jwtAuthToken,
-        extension,
-      });
+        await user.save();
 
-      const auth = new PSAuth({
-        username: extension,
-        password: extension,
-        _id: extension,
-      });
+        const auth = new PSAuth({
+          username: extension,
+          password: extension,
+          _id: extension,
+        });
 
-      const aors = new PSAors({
-        _id: extension,
-      });
+        const aors = new PSAors({
+          _id: extension,
+        });
 
-      const endpoint = new PSEndpoint({
-        aors: extension,
-        _id: extension,
-        auth: extension,
-      });
+        const endpoint = new PSEndpoint({
+          aors: extension,
+          _id: extension,
+          auth: extension,
+        });
 
-      const session = await mongoose.startSession();
-
-      await session.startTransaction();
-      try {
-        let userData = await user.save();
         await auth.save();
         await aors.save();
         await endpoint.save();
+        await OTPModel.deleteOne({ email });
+
         await session.commitTransaction();
         await session.endSession();
-        return res.status(httpStatus.CREATED).send({
-          success: true,
-          message: "User SignIn Successfully.",
-          data: userData,
-        });
-      } catch (error) {
-        await session.abortTransaction();
-        next(error, req, res);
-      }
-    }
-  }
-};
 
-const verifyContact = async (req, res, next) => {
-  try {
-    const { extension } = req.user;
-    const { mobile, otp } = req.body;
-    const comparable = `${otp}${mobile}`;
-    let OTPData = await OTPModel.findOne({ mobile, extension });
-    if (OTPData) {
-      let hashedOTP = await bcrypt.compare(comparable, OTPData.otp);
-      if (hashedOTP) {
-        let data = await Users.findOneAndUpdate(
-          { extension, "verified_contacts.mobile": mobile },
-          { $set: { "verified_contacts.$.is_verified": true } },
-          { new: true }
-        );
-        return res
-          .status(httpStatus.OK)
-          .send({ message: "Verification successfull.", data, status: true });
+        return res.send({ message: "Verified successfully, Please Sign In." });
       } else {
-        return res
-          .status(httpStatus.BAD_REQUEST)
-          .send({ message: "Invalid OTP", status: false, data: null });
+        await session.abortTransaction();
+        session.endSession();
+        return res.send({ message: "Invalid OTP, Please try again." });
       }
     } else {
-      return res
-        .status(httpStatus.BAD_REQUEST)
-        .send({ message: "User Not Found.", status: false, data: null });
+      await session.abortTransaction();
+      session.endSession();
+      return res.send({ message: "Invalid OTP, Please try again." });
     }
-  } catch (error) {
-    next(error, req, res);
+  } catch (e) {
+    await session.abortTransaction();
+    session.endSession();
+    return res.send({ message: "Error while validating OTP" });
   }
 };
 
-const addContact = async (req, res, next) => {
+const login = async (req, res, next) => {
+  const { email, password } = req.body;
+  const filterUser = { email };
   try {
-    const { extension, name } = req.user;
-
-    const { mobile } = req.body;
-
-    if (req.user.mobile == mobile) {
-      return res.status(httpStatus.BAD_REQUEST).send({
+    let user = await Users.findOne(filterUser);
+    if (!user) {
+      return res.status(400).send({
         status: false,
-        data: null,
-        message: "Mobile number should not be same as your mobile number.",
+        message: `Sorry, You are not registered with us, Please Sign Up.`,
       });
     }
 
-    const otp = getRandomNumber(100000, 999999);
+    let userData = await bcrypt.compare(password, user.password);
+    //if both match than you can do anything
+    if (userData) {
+      if (user && !user.is_verified) {
+        return res.status(400).send({
+          status: false,
+          message: "You are not verified with us, please verify yourself first",
+        });
+      }
 
-    const body = `Hey, ${name} has requested you to have you in his/her critical caller list. Please provide him/her this One Time Password to ${otp} to approve his/her request.`;
+      let jwtAuthToken = await createToken(user.email);
 
-    let userContact = await Users.find({ "verified_contacts.mobile": mobile });
-
-    const dataToHash = `${otp}${mobile}`;
-    let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
-    let hash = await bcrypt.hash(dataToHash, salt);
-    let messageResp = await sendSMS(body, mobile);
-
-    if (messageResp.error_code) {
-      return res
-        .status(httpStatus.INTERNAL_SERVER_ERROR)
-        .send({ message: "Failed to send OTP, Please try again." });
-    }
-    if (userContact.length) {
-      await OTPModel.findOneAndUpdate(
-        { mobile, extension },
-        { otp: hash },
-        { new: true, upsert: true }
-      );
-      return res
-        .status(httpStatus.OK)
-        .send({ message: "OTP has been sent.", data: null, success: true });
-    } else {
-      let otpData = new OTPModel({
-        otp: hash,
-        mobile,
-        extension,
-      });
-
-      await otpData.save();
-      let newContact = {
-        mobile,
+      const updateUserObject = {
+        auth_token: jwtAuthToken,
       };
 
-      await Users.findOneAndUpdate(
-        { extension },
-        { $push: { verified_contacts: newContact } },
-        { new: true }
-      );
-      return res
-        .status(httpStatus.OK)
-        .send({ message: "OTP has been sent.", data: null, status: true });
+      await Users.findOneAndUpdate(filterUser, updateUserObject, {
+        new: true,
+      });
+      return res.status(httpStatus.OK).send({
+        message: "Login Success.",
+        token: jwtAuthToken,
+        success: true,
+      });
+    } else {
+      return res.status(400).send({ msg: "Invalid credencial" });
     }
   } catch (error) {
-    next(error, req, res);
+    console.log(error, "error");
+    return res.status(500).send({
+      status: false,
+      message: "Internal Server Error while Login in...",
+    });
   }
 };
 
-const validateOTP = async (req, res, next) => {
+const registerUser = async (req, res, next) => {
+  const { email, password, first_name, last_name } = req.body;
   try {
-    const { otp, mobile } = req.body;
-    const { extension } = req.user;
-    const comparable = `${otp}${mobile}`;
-    let OTPData = await OTPModel.findOne({ mobile, extension });
-    if (OTPData) {
-      let hashedOTP = await bcrypt.compare(comparable, OTPData.otp);
-      if (hashedOTP) {
-        const filter = { extension };
-        const update = { verified: true, mobile };
-        await Users.findOneAndUpdate(filter, update, { new: true });
-        await OTPModel.findOneAndRemove({ mobile, extension });
-        return res.status(httpStatus.OK).send({
-          status: true,
-          message: "Verification successfull.",
-          data: null,
-        });
-      } else {
-        return res.status(httpStatus.BAD_REQUEST).send({
-          status: false,
-          data: null,
-          message: "Invalid OTP",
+    let user = await Users.findOne({ email });
+
+    // check whether user is already registered or not.
+    if (user && user.email) {
+      return res.send({ message: "User already registered, Please Sign In" });
+    } else {
+      let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
+      let hashedPassword = await bcrypt.hash(password, salt);
+
+      let newUser = new Users({
+        first_name,
+        last_name,
+        email,
+        password: hashedPassword,
+      });
+
+      let userResp = await newUser.save();
+      return res.status(httpStatus.CREATED).send({
+        message:
+          "You have been successfully registered, please verify and proceed.",
+        status: true,
+        data: userResp,
+      });
+    }
+  } catch (e) {
+    console.log(e, "error");
+    return res.send(500).send({
+      message: "Failed to create an user.",
+      status: false,
+      data: null,
+    });
+  }
+};
+
+const checkUserVerified = async (req, res, next) => {
+  try {
+    let { email } = req.body;
+    let user = await Users.findOne({ email });
+    if (user && user.is_verified) {
+      return res.status(200).send({
+        message: "You are already verified.",
+        success: true,
+      });
+    } else {
+      next();
+    }
+  } catch (error) {
+    return res.status(500).send({
+      message: "Error while verifiying user's status",
+      success: false,
+    });
+  }
+};
+
+const inviteUser = async (req, res) => {
+  try {
+    let { email } = req.body;
+    let { first_name, last_name } = req.user;
+    let userExist = await Users.findOne({ email });
+    if (userExist) {
+      let emailStatus = await sendEmail({
+        to: email,
+        subject: "RogerThat User Invitation",
+        html: `Hey there! Your Friend  ${first_name} ${last_name} has invited you RogerThat.`,
+        text: "",
+      });
+
+      if (emailStatus.accepted && emailStatus.accepted.indexOf(email) == -1) {
+        return res.send({
+          message: "Technical error while sending email, please try again.",
         });
       }
+
+      await InviteFriend.findOneAndUpdate(
+        { fromUser: req.user._id, toUser: userExist._id },
+        { toUser: userExist._id, fromUser: req.user._id },
+        { new: true, upsert: true }
+      );
+
+      return res.send({
+        message: "Invitation has been sent successfully.",
+      });
     } else {
-      return res.status(httpStatus.BAD_REQUEST).send({
-        status: false,
-        data: null,
-        message: "Invalid OTP",
+      return res.send({
+        message:
+          "Sorry, Your friend does not have an account with RogerThat, Please ask him/her to sign up",
       });
     }
   } catch (error) {
-    next(error, req, res);
+    return res.send({
+      message: "Technical error while sending invitation, please try again.",
+    });
   }
 };
 
-const sendOTP = async (req, res, next) => {
+const manageInvite = async (req, res) => {
   try {
-    const mobile = req.body.mobile;
-    const extension = req.user.extension;
-    const OTP = getRandomNumber(100000, 999999);
-    const body = `OTP For user registration to Critic Alert is ${OTP}, This OTP will expire in 10 minutes.`;
-    let messageResp = await sendSMS(body, mobile);
+    let { userId, isAccepted } = req.body;
+    let { first_name, last_name, email } = req.user;
+    // let userExist = await Friends.find({
+    //   user: req.user._id,
+    // });
 
-    if (messageResp.error_code) {
-      return res.status(httpStatus.INTERNAL_SERVER_ERROR).send({
-        data: null,
-        status: false,
-        message: "Failed to send OTP, Please try again.",
-      });
-    } else {
-      const dataToHash = `${OTP}${mobile}`;
-      let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
-      let hash = await bcrypt.hash(dataToHash, salt);
-      let otpData = new OTPModel({
-        otp: hash,
-        mobile,
-        extension,
-      });
-      await otpData.save();
-      return res
-        .status(httpStatus.OK)
-        .send({ data: null, status: true, message: "OTP has been sent." });
-    }
+    // if (userExist.length) {
+    await InviteFriend.findOneAndUpdate(
+      { fromUser: req.user._id, toUser: userId },
+      { isAccepted },
+      { new: true, upsert: true }
+    );
+
+    await Friends.findOneAndUpdate(
+      { user: req.user._id },
+      { $push: { contacts: userId } },
+      { new: true }
+    );
+
+    return res.send({
+      message: isAccepted ? "User added successfully." : "Invite Declined.",
+      success: true,
+    });
+    // } else {
+    // return res.send({
+    //   message: "Sorry, User Does not exists",
+    //   success: true,
+    // });
+    // }
   } catch (error) {
-    next(error, req, res);
+    console.log(error, "error");
+    return res.send({
+      message: "Technical error while updating invite, please try again.",
+    });
   }
 };
 
 module.exports = {
   registerUser,
-  makeAuthentication,
-  validateOTP,
-  sendOTP,
-  addContact,
-  verifyContact,
+  login,
+  verifyAccount,
+  checkUserVerified,
+  sendVerificationEmail,
+  inviteUser,
+  manageInvite,
 };

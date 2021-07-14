@@ -1,16 +1,19 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const router = express.Router();
+
 const userRoute = require("../v1/users.route");
-const extensionsRoute = require("../v1/extensions.route");
+const { emailServiceStatus, mongoDBStatus } = require("../../services");
 
 router.get("/status", async (req, res) => {
-  res.send({
+  const mailServerStatus = await emailServiceStatus();
+  const mongoDBStatusMessage = mongoDBStatus();
+  return res.status(200).send({
     version: process.env.VERSION,
-    message: "Server is up and running",
+    mongo: mongoDBStatusMessage,
+    mailService: mailServerStatus,
   });
 });
 
 router.use("/users", userRoute);
-router.use("/extensions", extensionsRoute);
-
 module.exports = router;

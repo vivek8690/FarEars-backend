@@ -1,34 +1,32 @@
-const express = require('express');
-
-const {
-	makeAuthentication,
-	registerUser,
-	sendOTP,
-	addContact,
-	validateOTP,
-	verifyContact,
-} = require('../../controllers/users.controller');
-
-const { validateUser, isUserVerified } = require('../../middlewares');
-
+const express = require("express");
 const router = express.Router();
 
-// Signup using google
-router.get('/auth/google', makeAuthentication);
+const {
+  registerUser,
+  login,
+  verifyAccount,
+  sendVerificationEmail,
+  checkUserVerified,
+  inviteUser,
+  manageInvite,
+} = require("../../controllers/users.controller");
 
-router.get('/auth/google/callback', registerUser);
+const { validateUser } = require("../../middlewares");
 
-router.post('/auth/send-otp', validateUser, sendOTP);
+router.post("/register", registerUser);
 
-router.post('/auth/validate-otp', validateUser, validateOTP);
-
-router.post('/auth/add-contact', validateUser, isUserVerified, addContact);
+router.post("/login", login);
 
 router.post(
-	'/auth/verify-contact',
-	validateUser,
-	isUserVerified,
-	verifyContact
+  "/send-verification-email",
+  checkUserVerified,
+  sendVerificationEmail
 );
+
+router.post("/verify-account", verifyAccount);
+
+router.post("/invite-user", validateUser, inviteUser);
+
+router.post("/manage-invite", validateUser, manageInvite);
 
 module.exports = router;
