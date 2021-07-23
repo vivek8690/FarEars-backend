@@ -50,7 +50,7 @@ const sendVerificationEmail = async (req, res, next) => {
     );
     return res.send({ message: "Verification Email Has Been Sent" });
   } catch (e) {
-    return res.send({ message: "Failed to send verification email" });
+    next(e);
   }
 };
 
@@ -60,6 +60,9 @@ const verifyAccount = async (req, res, next) => {
     let user = await Users.findOne({ email });
     if (user && user.is_verified) {
       return res.send({ message: "You are already verified" });
+    }
+    if(!user){
+      throw new Error('User not found with this email ID');
     }
     let otpData = await OTPModel.findOne({ email });
     if (!otpData) {
@@ -71,7 +74,7 @@ const verifyAccount = async (req, res, next) => {
       if (isSuccess) {
         user.is_verified = true;
         await OTPModel.deleteOne({ email });
-
+        await user.save();
         return res.send({ message: "Verified successfully, Please Sign In." });
       } else {
         return res.send({ message: "Invalid OTP, Please try again." });
@@ -80,7 +83,7 @@ const verifyAccount = async (req, res, next) => {
       return res.send({ message: "Invalid OTP, Please try again." });
     }
   } catch (e) {
-    return res.send({ message: "Error while validating OTP" });
+    next(e)
   }
 };
 
