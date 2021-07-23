@@ -9,9 +9,12 @@ const {
   checkUserVerified,
   inviteUser,
   manageInvite,
+  allUsers
 } = require("../../controllers/users.controller");
 
 const { validateUser } = require("../../middlewares");
+
+router.get('/', allUsers);
 
 router.post("/register", registerUser);
 

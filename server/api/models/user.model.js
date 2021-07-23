@@ -22,7 +22,6 @@ const UserSchema = new mongoose.Schema(
     },
     extension: {
       type: String,
-      ref: "ps_endpoints",
     },
     auth_token: {
       type: String,

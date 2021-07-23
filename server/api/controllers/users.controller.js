@@ -1,11 +1,11 @@
-const MIN_EXT_RANGE = 1001;
-const MAX_EXT_RANGE = 9999;
 const { BCRYPT_SALT } = process.env;
 
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const randomize = require("randomatic");
+const APIError = require("../utils/APIError");
+const { createExtension } = require("../services/asterisk");
 
 const {
   PSAors,
@@ -55,21 +55,14 @@ const sendVerificationEmail = async (req, res, next) => {
 };
 
 const verifyAccount = async (req, res, next) => {
-  const session = await mongoose.startSession();
-  await session.startTransaction();
   try {
     let { otp, email } = req.body;
     let user = await Users.findOne({ email });
     if (user && user.is_verified) {
-      await session.abortTransaction();
-      session.endSession();
-
       return res.send({ message: "You are already verified" });
     }
     let otpData = await OTPModel.findOne({ email });
     if (!otpData) {
-      await session.abortTransaction();
-      session.endSession();
       return res.send({ message: "OTP Does not match or Does not exists" });
     }
     if (otpData && otpData.email == email) {
@@ -77,59 +70,16 @@ const verifyAccount = async (req, res, next) => {
       let isSuccess = await bcrypt.compare(comparable, otpData.otp);
       if (isSuccess) {
         user.is_verified = true;
-
-        let allRegisteredExt = await PSEndpoint.find({}).select("_id");
-        allRegisteredExt = allRegisteredExt.map((ext) => parseInt(ext._id));
-        let extension = MIN_EXT_RANGE;
-        for (let i = MIN_EXT_RANGE; i < MAX_EXT_RANGE; i++) {
-          if (allRegisteredExt.indexOf(i) == -1) {
-            extension = i;
-            break;
-          }
-        }
-
-        user.extension = extension;
-
-        await user.save();
-
-        const auth = new PSAuth({
-          username: extension,
-          password: extension,
-          _id: extension,
-        });
-
-        const aors = new PSAors({
-          _id: extension,
-        });
-
-        const endpoint = new PSEndpoint({
-          aors: extension,
-          _id: extension,
-          auth: extension,
-        });
-
-        await auth.save();
-        await aors.save();
-        await endpoint.save();
         await OTPModel.deleteOne({ email });
-
-        await session.commitTransaction();
-        await session.endSession();
 
         return res.send({ message: "Verified successfully, Please Sign In." });
       } else {
-        await session.abortTransaction();
-        session.endSession();
         return res.send({ message: "Invalid OTP, Please try again." });
       }
     } else {
-      await session.abortTransaction();
-      session.endSession();
       return res.send({ message: "Invalid OTP, Please try again." });
     }
   } catch (e) {
-    await session.abortTransaction();
-    session.endSession();
     return res.send({ message: "Error while validating OTP" });
   }
 };
@@ -189,7 +139,10 @@ const registerUser = async (req, res, next) => {
 
     // check whether user is already registered or not.
     if (user && user.email) {
-      return res.send({ message: "User already registered, Please Sign In" });
+      throw new APIError({
+        message: "User already registered, Please Sign In",
+        status: 400,
+      });
     } else {
       let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
       let hashedPassword = await bcrypt.hash(password, salt);
@@ -200,7 +153,7 @@ const registerUser = async (req, res, next) => {
         email,
         password: hashedPassword,
       });
-
+      newUser.extension = await createExtension(password);
       let userResp = await newUser.save();
       return res.status(httpStatus.CREATED).send({
         message:
@@ -210,12 +163,8 @@ const registerUser = async (req, res, next) => {
       });
     }
   } catch (e) {
-    console.log(e, "error");
-    return res.send(500).send({
-      message: "Failed to create an user.",
-      status: false,
-      data: null,
-    });
+    console.log(e);
+    throw next(e);
   }
 };
 
@@ -319,6 +268,18 @@ const manageInvite = async (req, res) => {
   }
 };
 
+const allUsers = async (req,res) =>{
+  try{
+    const users = await Users.find().select('-password');
+    return res.send({
+      message: "All users list",
+      data: users
+    });
+  }catch(err){
+    throw err;
+  }
+}
+
 module.exports = {
   registerUser,
   login,
@@ -327,4 +288,5 @@ module.exports = {
   sendVerificationEmail,
   inviteUser,
   manageInvite,
+  allUsers
 };
