@@ -5,7 +5,7 @@ const Identify = require("./identify.model");
 const OTPModel = require("./otp.model");
 const Users = require("./user.model");
 const Groups = require("./groups.model");
-const InviteFriend = require("./friendInvite.model");
+const Invitation = require("./invitation.model");
 const Friends = require("./friends.model");
 
 module.exports = {
@@ -16,6 +16,6 @@ module.exports = {
   OTPModel,
   Users,
   Groups,
-  InviteFriend,
+  Invitation,
   Friends,
 };

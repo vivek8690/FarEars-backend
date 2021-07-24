@@ -6,17 +6,7 @@ const bcrypt = require("bcrypt");
 const randomize = require("randomatic");
 const APIError = require("../utils/APIError");
 const { createExtension } = require("../services/asterisk");
-
-const {
-  PSAors,
-  PSAuth,
-  PSEndpoint,
-  OTPModel,
-  Users,
-  InviteFriend,
-  Friends,
-  Groups,
-} = require("../models");
+const { OTPModel, Users, Invitation, Friends, Groups } = require("../models");
 
 const { sendEmail } = require("../services");
 
@@ -25,6 +15,13 @@ const { getRandomNumber, createToken } = require("../utils");
 const sendVerificationEmail = async (req, res, next) => {
   try {
     const { email } = req.body;
+    let user = await Users.findOne({ email });
+    if (!user) {
+      throw new APIError({
+        message: "User not found with this email ID",
+        status: 400,
+      });
+    }
     const otp = randomize("000000");
     let emailStatus = await sendEmail({
       to: email,
@@ -34,9 +31,7 @@ const sendVerificationEmail = async (req, res, next) => {
     });
 
     if (emailStatus.accepted && emailStatus.accepted.indexOf(email) == -1) {
-      return res.send({
-        message: "Technical error while sending email, please try again.",
-      });
+      throw new Error("Technical error while sending email, please try again.");
     }
 
     const dataToHash = `${otp}${email}`;
@@ -61,12 +56,18 @@ const verifyAccount = async (req, res, next) => {
     if (user && user.is_verified) {
       return res.send({ message: "You are already verified" });
     }
-    if(!user){
-      throw new Error('User not found with this email ID');
+    if (!user) {
+      throw new APIError({
+        message: "User not found with this email ID",
+        status: 400,
+      });
     }
     let otpData = await OTPModel.findOne({ email });
     if (!otpData) {
-      return res.send({ message: "OTP Does not match or Does not exists" });
+      throw new APIError({
+        message: "OTP Does not match or Does not exists",
+        status: 400,
+      });
     }
     if (otpData && otpData.email == email) {
       let comparable = `${otp}${email}`;
@@ -77,13 +78,19 @@ const verifyAccount = async (req, res, next) => {
         await user.save();
         return res.send({ message: "Verified successfully, Please Sign In." });
       } else {
-        return res.send({ message: "Invalid OTP, Please try again." });
+        throw new APIError({
+          message: "Invalid OTP, Please try again.",
+          status: 400,
+        });
       }
     } else {
-      return res.send({ message: "Invalid OTP, Please try again." });
+      throw new APIError({
+        message: "Invalid OTP, Please try again.",
+        status: 400,
+      });
     }
   } catch (e) {
-    next(e)
+    next(e);
   }
 };
 
@@ -93,9 +100,9 @@ const login = async (req, res, next) => {
   try {
     let user = await Users.findOne(filterUser);
     if (!user) {
-      return res.status(400).send({
-        status: false,
-        message: `Sorry, You are not registered with us, Please Sign Up.`,
+      throw new APIError({
+        message: "orry, You are not registered with us, Please Sign Up.",
+        status: 400,
       });
     }
 
@@ -103,35 +110,27 @@ const login = async (req, res, next) => {
     //if both match than you can do anything
     if (userData) {
       if (user && !user.is_verified) {
-        return res.status(400).send({
-          status: false,
-          message: "You are not verified with us, please verify yourself first",
+        throw new APIError({
+          message: "For login please verify your email first",
+          status: 400,
         });
       }
 
       let jwtAuthToken = await createToken(user.email);
-
-      const updateUserObject = {
-        auth_token: jwtAuthToken,
-      };
-
-      await Users.findOneAndUpdate(filterUser, updateUserObject, {
-        new: true,
-      });
       return res.status(httpStatus.OK).send({
         message: "Login Success.",
         token: jwtAuthToken,
+        data: user,
         success: true,
       });
     } else {
-      return res.status(400).send({ msg: "Invalid credencial" });
+      throw new APIError({
+        message: "Invalid credencials",
+        status: 400,
+      });
     }
   } catch (error) {
-    console.log(error, "error");
-    return res.status(500).send({
-      status: false,
-      message: "Internal Server Error while Login in...",
-    });
+    next(error);
   }
 };
 
@@ -166,130 +165,26 @@ const registerUser = async (req, res, next) => {
       });
     }
   } catch (e) {
-    console.log(e);
     throw next(e);
   }
 };
 
-const checkUserVerified = async (req, res, next) => {
+const allUsers = async (req, res) => {
   try {
-    let { email } = req.body;
-    let user = await Users.findOne({ email });
-    if (user && user.is_verified) {
-      return res.status(200).send({
-        message: "You are already verified.",
-        success: true,
-      });
-    } else {
-      next();
-    }
-  } catch (error) {
-    return res.status(500).send({
-      message: "Error while verifiying user's status",
-      success: false,
-    });
-  }
-};
-
-const inviteUser = async (req, res) => {
-  try {
-    let { email } = req.body;
-    let { first_name, last_name } = req.user;
-    let userExist = await Users.findOne({ email });
-    if (userExist) {
-      let emailStatus = await sendEmail({
-        to: email,
-        subject: "RogerThat User Invitation",
-        html: `Hey there! Your Friend  ${first_name} ${last_name} has invited you RogerThat.`,
-        text: "",
-      });
-
-      if (emailStatus.accepted && emailStatus.accepted.indexOf(email) == -1) {
-        return res.send({
-          message: "Technical error while sending email, please try again.",
-        });
-      }
-
-      await InviteFriend.findOneAndUpdate(
-        { fromUser: req.user._id, toUser: userExist._id },
-        { toUser: userExist._id, fromUser: req.user._id },
-        { new: true, upsert: true }
-      );
-
-      return res.send({
-        message: "Invitation has been sent successfully.",
-      });
-    } else {
-      return res.send({
-        message:
-          "Sorry, Your friend does not have an account with RogerThat, Please ask him/her to sign up",
-      });
-    }
-  } catch (error) {
-    return res.send({
-      message: "Technical error while sending invitation, please try again.",
-    });
-  }
-};
-
-const manageInvite = async (req, res) => {
-  try {
-    let { userId, isAccepted } = req.body;
-    let { first_name, last_name, email } = req.user;
-    // let userExist = await Friends.find({
-    //   user: req.user._id,
-    // });
-
-    // if (userExist.length) {
-    await InviteFriend.findOneAndUpdate(
-      { fromUser: req.user._id, toUser: userId },
-      { isAccepted },
-      { new: true, upsert: true }
-    );
-
-    await Friends.findOneAndUpdate(
-      { user: req.user._id },
-      { $push: { contacts: userId } },
-      { new: true }
-    );
-
-    return res.send({
-      message: isAccepted ? "User added successfully." : "Invite Declined.",
-      success: true,
-    });
-    // } else {
-    // return res.send({
-    //   message: "Sorry, User Does not exists",
-    //   success: true,
-    // });
-    // }
-  } catch (error) {
-    console.log(error, "error");
-    return res.send({
-      message: "Technical error while updating invite, please try again.",
-    });
-  }
-};
-
-const allUsers = async (req,res) =>{
-  try{
-    const users = await Users.find().select('-password');
+    const users = await Users.find().select("-password");
     return res.send({
       message: "All users list",
-      data: users
+      data: users,
     });
-  }catch(err){
+  } catch (err) {
     throw err;
   }
-}
+};
 
 module.exports = {
   registerUser,
   login,
   verifyAccount,
-  checkUserVerified,
   sendVerificationEmail,
-  inviteUser,
-  manageInvite,
-  allUsers
+  allUsers,
 };

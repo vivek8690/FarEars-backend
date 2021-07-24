@@ -3,7 +3,7 @@
  */
 const mongoose = require('mongoose');
 
-const InviteFriend = new mongoose.Schema(
+const Invitation = new mongoose.Schema(
 	{
 		fromUser: {
 			type: mongoose.Schema.Types.ObjectId,
@@ -22,6 +22,6 @@ const InviteFriend = new mongoose.Schema(
 );
 
 /**
- * @model InviteFriend
+ * @model Invitation
  */
-module.exports = mongoose.model('inviteFriend', InviteFriend);
+module.exports = mongoose.model('invitation', Invitation);
