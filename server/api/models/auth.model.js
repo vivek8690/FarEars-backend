@@ -17,7 +17,7 @@ const AuthSchema = new mongoose.Schema(
 		},
 		md5_cred: {
 			type: String,
-			default: 'AsteriskMD5Hash',
+			required: 'Please fill md5 password',
 		},
 		username: {
 			type: String,
@@ -26,11 +26,7 @@ const AuthSchema = new mongoose.Schema(
 		realm: {
 			type: String,
 			default: 'asterisk',
-		},
-		type: {
-			type: String,
-			default: 'auth',
-		},
+		}
 	},
 	{ versionKey: false, _id: false }
 );

@@ -7,17 +7,30 @@ const inviteUser = async (req, res, next) => {
     let { first_name, last_name } = req.user;
     let userExist = await Users.findOne({ email, is_verified: true });
     if (userExist) {
-      // send push notification to user
-
-      await Invitation.findOneAndUpdate(
-        { fromUser: req.user._id, toUser: userExist._id },
-        { fromUser: req.user._id, toUser: userExist._id },
-        { setDefaultsOnInsert: true, new: true, upsert: true }
-      );
-
-      return res.send({
-        message: "Invitation has been sent successfully.",
+      const invitationObj = await Invitation.findOne({
+        $or: [
+          { fromUser: userExist._id, toUser: req.user._id },
+          { toUser: userExist._id, fromUser: req.user._id },
+        ],
       });
+      if (!invitationObj) {
+        // send push notification to user
+
+        await Invitation.findOneAndUpdate(
+          { fromUser: req.user._id, toUser: userExist._id },
+          { fromUser: req.user._id, toUser: userExist._id },
+          { setDefaultsOnInsert: true, new: true, upsert: true }
+        );
+
+        return res.send({
+          message: "Invitation has been sent successfully.",
+        });
+      } else {
+        throw new APIError({
+          message: "Please check your invitations list it should be there",
+          status: 400,
+        });
+      }
     } else {
       throw new APIError({
         message:
@@ -39,7 +52,7 @@ const manageInvite = async (req, res, next) => {
       { isAccepted },
       { new: true }
     );
-    if(isAccepted){
+    if (isAccepted) {
       await Friends.findOneAndUpdate(
         { user: _id },
         { $addToSet: { contacts: invitationObj.fromUser } },

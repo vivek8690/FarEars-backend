@@ -13,24 +13,8 @@ const AorSchema = new mongoose.Schema(
 		},
 		max_contacts: {
 			type: String,
-			default: '1',
-		},
-		minimum_expiration: {
-			type: String,
 			default: '10',
-		},
-		maximum_expiration: {
-			type: String,
-			default: '10',
-		},
-		remove_existing: {
-			type: String,
-			default: 'yes',
-		},
-		contact: {
-			type: String,
-			default: '',
-		},
+		}
 	},
 	{ versionKey: false, _id: false }
 );

@@ -17,9 +17,6 @@ const EndpointSchema = new mongoose.Schema(
 		auth: {
 			type: String,
 		},
-		outbound_auth: {
-			type: String,
-		},
 		context: {
 			type: String,
 			default: 'testing',
@@ -48,22 +45,6 @@ const EndpointSchema = new mongoose.Schema(
 		rtp_symmetric: {
 			type: String,
 			default: 'yes',
-		},
-		trust_id_outbound: {
-			type: String,
-			default: 'yes',
-		},
-		dtmf_mode: {
-			type: String,
-			default: 'rfc4733',
-		},
-		ice_support: {
-			type: String,
-			default: 'yes',
-		},
-		isTrunk: {
-			type: Boolean,
-			default: 'false',
 		},
 		transport: {
 			type: String,
