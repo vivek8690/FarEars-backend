@@ -7,23 +7,41 @@ const {
   verifyAccount,
   sendVerificationEmail,
   manageInvite,
-  allUsers
+  allUsers,
+  updateUserProfilePicture,
+  fetchUserById,
 } = require("../../controllers/users.controller");
 
-const { validateUser } = require("../../middlewares");
+const { validateUser, upload } = require("../../middlewares");
 
-router.get('/', allUsers);
+const singleUpload = upload.single("image");
+
+router.get("/", allUsers);
 
 router.post("/register", registerUser);
 
 router.post("/login", login);
 
+router.post("/send-verification-email", isUserVerified, sendVerificationEmail);
+
 router.post(
-  "/send-verification-email",
-  isUserVerified,
-  sendVerificationEmail
+  "/upload",
+  validateUser,
+  function (req, res, next) {
+    singleUpload(req, res, function (err) {
+      if (err) {
+        return res.status(422).send({
+          errors: [{ title: "Image Upload Error", detail: err.message }],
+        });
+      }
+      req.user.profile_picture = req.file.location;
+      next();
+    });
+  },
+  updateUserProfilePicture
 );
 
+router.get("/:id", validateUser, fetchUserById);
 router.post("/verify-account", verifyAccount);
 
 module.exports = router;

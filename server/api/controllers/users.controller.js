@@ -15,7 +15,9 @@ const { getRandomNumber, createToken } = require("../utils");
 const sendVerificationEmail = async (req, res, next) => {
   try {
     const { email } = req.body;
-    let user = await Users.findOne({ email });
+    let user = await Users.findOne({
+      email,
+    });
     if (!user) {
       throw new APIError({
         message: "User not found with this email ID",
@@ -39,11 +41,21 @@ const sendVerificationEmail = async (req, res, next) => {
     let hash = await bcrypt.hash(dataToHash, salt);
 
     await OTPModel.findOneAndUpdate(
-      { email },
-      { otp: hash, email },
-      { new: true, upsert: true }
+      {
+        email,
+      },
+      {
+        otp: hash,
+        email,
+      },
+      {
+        new: true,
+        upsert: true,
+      }
     );
-    return res.send({ message: "Verification Email Has Been Sent" });
+    return res.send({
+      message: "Verification Email Has Been Sent",
+    });
   } catch (e) {
     next(e);
   }
@@ -52,9 +64,13 @@ const sendVerificationEmail = async (req, res, next) => {
 const verifyAccount = async (req, res, next) => {
   try {
     let { otp, email } = req.body;
-    let user = await Users.findOne({ email });
+    let user = await Users.findOne({
+      email,
+    });
     if (user && user.is_verified) {
-      return res.send({ message: "You are already verified" });
+      return res.send({
+        message: "You are already verified",
+      });
     }
     if (!user) {
       throw new APIError({
@@ -62,7 +78,9 @@ const verifyAccount = async (req, res, next) => {
         status: 400,
       });
     }
-    let otpData = await OTPModel.findOne({ email });
+    let otpData = await OTPModel.findOne({
+      email,
+    });
     if (!otpData) {
       throw new APIError({
         message: "OTP Does not match or Does not exists",
@@ -74,9 +92,13 @@ const verifyAccount = async (req, res, next) => {
       let isSuccess = await bcrypt.compare(comparable, otpData.otp);
       if (isSuccess) {
         user.is_verified = true;
-        await OTPModel.deleteOne({ email });
+        await OTPModel.deleteOne({
+          email,
+        });
         await user.save();
-        return res.send({ message: "Verified successfully, Please Sign In." });
+        return res.send({
+          message: "Verified successfully, Please Sign In.",
+        });
       } else {
         throw new APIError({
           message: "Invalid OTP, Please try again.",
@@ -96,7 +118,9 @@ const verifyAccount = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   const { email, password } = req.body;
-  const filterUser = { email };
+  const filterUser = {
+    email,
+  };
   try {
     let user = await Users.findOne(filterUser);
     if (!user) {
@@ -137,7 +161,9 @@ const login = async (req, res, next) => {
 const registerUser = async (req, res, next) => {
   const { email, password, first_name, last_name } = req.body;
   try {
-    let user = await Users.findOne({ email });
+    let user = await Users.findOne({
+      email,
+    });
 
     // check whether user is already registered or not.
     if (user && user.email) {
@@ -181,10 +207,41 @@ const allUsers = async (req, res) => {
   }
 };
 
+const updateUserProfilePicture = async (req, res, next) => {
+  try {
+    let newData = await Users.findOneAndUpdate(
+      { email: req.user.email },
+      { profile: req.user.profile_picture },
+      { new: true }
+    );
+    return res.send({
+      message: "Profile Picture Updated Successfully.",
+      data: newData,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const fetchUserById = async (req, res) => {
+  try {
+    let { id } = req.params;
+    let user = await Users.findById(id);
+    return res.send({
+      message: "User fetched Successfully.",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
   login,
   verifyAccount,
   sendVerificationEmail,
   allUsers,
+  updateUserProfilePicture,
+  fetchUserById,
 };

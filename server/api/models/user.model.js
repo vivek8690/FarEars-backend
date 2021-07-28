@@ -30,6 +30,9 @@ const UserSchema = new mongoose.Schema(
     invitedBy: {
       type: String,
     },
+    profile: {
+      type: String,
+    },
   },
   {
     timestamps: true,
