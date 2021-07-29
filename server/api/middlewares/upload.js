@@ -1,31 +1,37 @@
+const aws = require("aws-sdk");
 const multer = require("multer");
+const multerS3 = require("multer-s3");
 
-const csvFilter = (req, file, cb) => {
-  if (file.mimetype.includes("csv")) {
+aws.config.update({
+  signatureVersion: "v4",
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_S3_BUCKET_REGION,
+});
+
+const s3 = new aws.S3();
+
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
     cb(null, true);
   } else {
-    cb("Please upload only csv file.", false);
+    cb(new Error("Invalid file type, only JPEG and PNG is allowed!"), false);
   }
 };
 
-var storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    // eslint-disable-next-line no-undef
-    cb(null, __basedir + "/static/extensions/");
-  },
-  filename: (req, file, cb) => {
-    let userName = req.user.extension;
-    let fileName = `${Date.now()}-${userName}-${file.originalname}`;
-    req.fileName = fileName;
-    cb(null, fileName);
-  },
+const upload = multer({
+  fileFilter,
+  storage: multerS3({
+    acl: "public-read",
+    s3,
+    bucket: process.env.AWS_S3_BUCKET_NAME,
+    metadata: function (req, file, cb) {
+      cb(null, { fieldName: file.originalname });
+    },
+    key: function (req, file, cb) {
+      cb(null, file.originalname);
+    },
+  }),
 });
 
-const uploadFile = multer({
-  storage: storage,
-  fileFilter: csvFilter,
-});
-
-module.exports = {
-  uploadFile,
-};
+module.exports = upload;

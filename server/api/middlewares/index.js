@@ -1,5 +1,6 @@
 const { Users } = require("../models");
 const { validateToken } = require("../utils");
+const upload = require("./upload");
 
 const validateUser = async (req, res, next) => {
   try {
@@ -37,4 +38,4 @@ const validateUser = async (req, res, next) => {
   }
 };
 
-module.exports = { validateUser };
+module.exports = { validateUser, upload };
