@@ -20,7 +20,7 @@ const handler = (err, req, res) => {
 	}
 
 	res.status(err.status);
-	res.json(response);
+	return res.json(response);
 };
 exports.handler = handler;
 
@@ -44,6 +44,8 @@ exports.converter = (err, req, res, next) => {
 			status: err.status,
 			stack: err.stack,
 		});
+		return handler(convertedError, req, res);
+	}else if(err instanceof APIError){
 		return handler(convertedError, req, res);
 	}
 	next();
