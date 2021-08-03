@@ -13,6 +13,7 @@ const handler = (err, req, res) => {
 		message: err.message || httpStatus[err.status],
 		errors: err.errors,
 		stack: err.stack,
+		errCode: err.errCode
 	};
 
 	if (env !== 'development') {
@@ -36,6 +37,8 @@ exports.converter = (err, req, res, next) => {
 			errors: err.errors,
 			status: err.status,
 			stack: err.stack,
+			errCode: err.errCode
+
 		});
 		return handler(convertedError, req, res);
 	} else if (!(err instanceof APIError)) {
@@ -43,6 +46,7 @@ exports.converter = (err, req, res, next) => {
 			message: err.message,
 			status: err.status,
 			stack: err.stack,
+			errCode: err.errCode
 		});
 		return handler(convertedError, req, res);
 	}else if(err instanceof APIError){

@@ -20,9 +20,9 @@ router.get("/", allUsers);
 
 router.post("/register", registerUser);
 
-router.post("/login", login);
-
 router.post("/send-verification-email", isUserVerified, sendVerificationEmail);
+
+router.post("/login", login);
 
 router.post(
   "/upload",
