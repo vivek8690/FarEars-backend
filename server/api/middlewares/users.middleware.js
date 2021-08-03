@@ -1,3 +1,5 @@
+const { Users } = require("../models");
+
 const isUserVerified = async (req, res, next) => {
   try {
     let { email } = req.body;
@@ -11,6 +13,7 @@ const isUserVerified = async (req, res, next) => {
       next();
     }
   } catch (error) {
+    console.log(error);
     return res.status(500).send({
       message: "Error while verifiying user's status",
       success: false,

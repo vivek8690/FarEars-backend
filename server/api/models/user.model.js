@@ -2,6 +2,7 @@
  * Schema definition for Users
  */
 const mongoose = require("mongoose");
+const { uploadFromURL } = require("../services/profile.service");
 
 const UserSchema = new mongoose.Schema(
   {
@@ -33,11 +34,28 @@ const UserSchema = new mongoose.Schema(
     profile: {
       type: String,
     },
+    deviceToken: {
+      type: String,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+UserSchema.pre("save", async function (next) {
+  try {
+    if (!this.profile) {
+      const profileURL = await uploadFromURL(
+        `${this.first_name}+${this.last_name}`
+      );
+      this.profile = profileURL;
+    }
+  } catch (err) {
+    return next(err);
+  }
+  next();
+});
 
 /**
  * @model Users

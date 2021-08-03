@@ -3,26 +3,10 @@ const crypto = require("crypto");
 const mongoose = require("mongoose");
 const fs = require("fs");
 const csv = require("fast-csv");
-const AWS = require("aws-sdk");
+const { s3bucket } = require("../services/s3.service");
 
-const { PSAors, PSAuth, PSEndpoint } = require("../models");
+const { PSAors, PSAuth, PSEndpoint, OTPModel, Users } = require("../models");
 
-const bucket = new AWS.S3({
-  signatureVersion: "v4",
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_S3_BUCKET_REGION,
-});
-
-const getUserExtensions = async (req, res, next) => {
-  try {
-    let extensions = await PSEndpoint.find({}).select("id");
-    extensions = extensions.map((ext) => ext._id);
-    return res.status(200).send({ data: extensions });
-  } catch (error) {
-    next(error, req, res);
-  }
-};
 
 const uploadExtensions = async (req, res, next) => {
   try {
@@ -30,7 +14,6 @@ const uploadExtensions = async (req, res, next) => {
       return res.status(400).send("Please upload a CSV file!");
     }
     let users = [];
-    // eslint-disable-next-line no-undef
     let path = __basedir + "/static/extensions/" + req.file.filename;
     fs.createReadStream(path)
       .pipe(csv.parse({ headers: true }))
@@ -44,38 +27,38 @@ const uploadExtensions = async (req, res, next) => {
         const session = await mongoose.startSession();
         await session.startTransaction();
         // try {
-        let auths = [],
-          endpoints = [],
-          aors = [];
-        auths = users.map((el) => {
-          // console.log(el.extension);
-          let plainText = el.extension + ":" + "asterisk" + ":" + el.extension;
-          var md5Hash = crypto
-            .createHash("md5")
-            .update(plainText)
-            .digest("hex");
-          return {
-            username: el.extension,
-            md5_cred: md5Hash,
-            _id: el.extension,
-          };
-        });
-        aors = users.map((el) => {
-          return {
-            _id: el.extension,
-          };
-        });
-        endpoints = users.map((el) => {
-          return {
-            aors: el.extension,
-            _id: el.extension,
-            auth: el.extension,
-          };
-        });
+          let auths = [],
+            endpoint = [],
+            aors = [];
+          auths = users.map((el) => {
+            // console.log(el.extension);
+            let plainText = el.extension + ":" + "asterisk" + ":" + el.extension;
+            var md5Hash = crypto
+              .createHash("md5")
+              .update(plainText)
+              .digest("hex");
+            return {
+              username: el.extension,
+              md5_cred: md5Hash,
+              _id: el.extension,
+            };
+          });
+          aors = users.map((el) => {
+            return {
+              _id: el.extension,
+            };
+          });
+          endpoints = users.map((el) => {
+            return {
+              aors: el.extension,
+              _id: el.extension,
+              auth: el.extension,
+            };
+          });
 
-        await PSAuth.insertMany(auths);
-        await PSAors.insertMany(aors);
-        await PSEndpoint.insertMany(endpoints);
+          await PSAuth.insertMany(auths);
+          await PSAors.insertMany(aors);
+          await PSEndpoint.insertMany(endpoints);
         //   const fileContent = await fs.readFileSync(path);
         //   const s3Params = {
         //     Bucket: process.env.AWS_S3_BUCKET,
@@ -90,12 +73,12 @@ const uploadExtensions = async (req, res, next) => {
         //   };
         //
         //   try {
-        //     let delData = await bucket.deleteObjects(deleteParams).promise();
+        //     let delData = await s3bucket.deleteObjects(deleteParams).promise();
         //   } catch (er) {
         //     // do nothing because
         //   }
         //
-        //   bucket.upload(s3Params, (err, data) => {
+        //   s3bucket.upload(s3Params, (err, data) => {
         //     if (err) {
         //       next(err, req, res);
         //     }
@@ -116,9 +99,9 @@ const uploadExtensions = async (req, res, next) => {
         //   next(err, req, res);
         // }
         return res.status(httpStatus.CREATED).send({
-          success: true,
-          message: "Data uploaded Successfully",
-        });
+                success: true,
+                message: "Data uploaded Successfully",
+              });
       });
   } catch (error) {
     next(error, req, res);
@@ -127,7 +110,7 @@ const uploadExtensions = async (req, res, next) => {
 
 function getFile(params, file) {
   return new Promise((resolve, reject) => {
-    const pipe = bucket.getObject(params).createReadStream().pipe(file);
+    const pipe = s3bucket.getObject(params).createReadStream().pipe(file);
     pipe.on("error", reject);
     pipe.on("close", resolve);
   });
@@ -138,9 +121,7 @@ const getExtensions = async (req, res, next) => {
     Bucket: process.env.AWS_S3_BUCKET,
     Key: req.user.extension,
   };
-
   const file = fs.createWriteStream(
-    // eslint-disable-next-line no-undef
     __basedir + "/static/extensions/" + req.user.extension
   );
   await getFile(params, file);
@@ -149,28 +130,27 @@ const getExtensions = async (req, res, next) => {
     "Content-Disposition",
     "attachment; filename=" + `extension-${req.user.extension}.csv`
   );
-  res.status(200).sendFile(
-    // eslint-disable-next-line no-undef
-    __basedir + "/static/extensions/" + req.user.extension,
-    (error) => {
-      if (error) {
-        next(error, req, res);
-      }
-      fs.unlink(
-        // eslint-disable-next-line no-undef
-        __basedir + "/static/extensions/" + req.user.extension,
-        (err) => {
-          if (err) {
-            console.log(err);
-            next(err, req, res);
-          }
+  res
+    .status(200)
+    .sendFile(
+      __basedir + "/static/extensions/" + req.user.extension,
+      (error) => {
+        if (error) {
+          next(error, req, res);
         }
-      );
-    }
-  );
+        fs.unlink(
+          __basedir + "/static/extensions/" + req.user.extension,
+          (err) => {
+            if (err) {
+              console.log(err);
+              next(err, req, res);
+            }
+          }
+        );
+      }
+    );
 };
 module.exports = {
   uploadExtensions,
-  getUserExtensions,
   getExtensions,
 };

@@ -9,6 +9,7 @@ const { createExtension } = require("../services/asterisk");
 const { OTPModel, Users, Invitation, Friends, Groups } = require("../models");
 
 const { sendEmail } = require("../services");
+const { sendOTPEmail } = require("../services/user.service");
 
 const { getRandomNumber, createToken } = require("../utils");
 
@@ -21,38 +22,11 @@ const sendVerificationEmail = async (req, res, next) => {
     if (!user) {
       throw new APIError({
         message: "User not found with this email ID",
+        errCode: 'email_not_registered',
         status: 400,
       });
     }
-    const otp = randomize("000000");
-    let emailStatus = await sendEmail({
-      to: email,
-      subject: "RogerThat Account Verification",
-      html: `OTP For Account Verification is ${otp}`,
-      text: otp,
-    });
-
-    if (emailStatus.accepted && emailStatus.accepted.indexOf(email) == -1) {
-      throw new Error("Technical error while sending email, please try again.");
-    }
-
-    const dataToHash = `${otp}${email}`;
-    let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
-    let hash = await bcrypt.hash(dataToHash, salt);
-
-    await OTPModel.findOneAndUpdate(
-      {
-        email,
-      },
-      {
-        otp: hash,
-        email,
-      },
-      {
-        new: true,
-        upsert: true,
-      }
-    );
+    await sendOTPEmail(email);
     return res.send({
       message: "Verification Email Has Been Sent",
     });
@@ -68,13 +42,16 @@ const verifyAccount = async (req, res, next) => {
       email,
     });
     if (user && user.is_verified) {
-      return res.send({
-        message: "You are already verified",
+      throw new APIError({
+        message: "Already Verified",
+        errCode: "verified",
+        status: 400,
       });
     }
     if (!user) {
       throw new APIError({
         message: "User not found with this email ID",
+        errCode: "email_not_registered",
         status: 400,
       });
     }
@@ -84,6 +61,7 @@ const verifyAccount = async (req, res, next) => {
     if (!otpData) {
       throw new APIError({
         message: "OTP Does not match or Does not exists",
+        errCode: "invalid_otp",
         status: 400,
       });
     }
@@ -102,12 +80,14 @@ const verifyAccount = async (req, res, next) => {
       } else {
         throw new APIError({
           message: "Invalid OTP, Please try again.",
+          errCode: "invalid_otp",
           status: 400,
         });
       }
     } else {
       throw new APIError({
         message: "Invalid OTP, Please try again.",
+        errCode: "invalid_otp",
         status: 400,
       });
     }
@@ -117,7 +97,7 @@ const verifyAccount = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password, deviceToken } = req.body;
   const filterUser = {
     email,
   };
@@ -125,8 +105,9 @@ const login = async (req, res, next) => {
     let user = await Users.findOne(filterUser);
     if (!user) {
       throw new APIError({
-        message: "orry, You are not registered with us, Please Sign Up.",
+        message: "Sorry, You are not registered with us, Please Sign Up.",
         status: 400,
+        errCode: "email_not_registered",
       });
     }
 
@@ -134,12 +115,16 @@ const login = async (req, res, next) => {
     //if both match than you can do anything
     if (userData) {
       if (user && !user.is_verified) {
+        await sendOTPEmail(email);
         throw new APIError({
-          message: "For login please verify your email first",
+          message:
+            "For login please verify your email first, just sent on your email",
           status: 400,
+          errCode: "email_not_verified",
         });
       }
-
+      user.deviceToken = deviceToken;
+      await user.save();
       let jwtAuthToken = await createToken(user.email);
       return res.status(httpStatus.OK).send({
         message: "Login Success.",
@@ -150,6 +135,7 @@ const login = async (req, res, next) => {
     } else {
       throw new APIError({
         message: "Invalid credencials",
+        errCode: "invalid_creds",
         status: 400,
       });
     }
@@ -169,6 +155,7 @@ const registerUser = async (req, res, next) => {
     if (user && user.email) {
       throw new APIError({
         message: "User already registered, Please Sign In",
+        errCode: "email_exist",
         status: 400,
       });
     } else {
@@ -240,8 +227,8 @@ module.exports = {
   registerUser,
   login,
   verifyAccount,
-  sendVerificationEmail,
   allUsers,
   updateUserProfilePicture,
   fetchUserById,
+  sendVerificationEmail
 };

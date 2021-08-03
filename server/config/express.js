@@ -1,6 +1,7 @@
 const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
+const bodyparser = require('body-parser');
 const methodOverride = require('method-override');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -18,7 +19,7 @@ const app = express();
 
 // request logging. dev: console | production: file
 app.use(morgan(logs));
-
+app.use(bodyparser.json())
 // parse body params and attache them to req.body
 app.use(express.json()); //Used to parse JSON bodies
 app.use(express.urlencoded({ extended: true })); //Parse URL-encoded bodies
