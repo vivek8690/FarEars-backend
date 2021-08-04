@@ -7,20 +7,22 @@ const getAllFriends = async (req, res, next) => {
     const myInitiated = await Invitation.find({
       isAccepted: true,
       fromUser: req.user._id,
-    }).populate("fromUser");
+    }).populate("toUser");
 
     const gotInvited = await Invitation.find({
       isAccepted: true,
       toUser: req.user._id,
-    }).populate("toUser");
+    }).populate("fromUser");
 
-    const contacts = [...myInitiated, ...gotInvited].map((obj) => {
+    let contacts = [...myInitiated, ...gotInvited].map((obj) => {
       return ObjectId.isValid(obj.fromUser) ? obj.toUser : obj.fromUser;
     })
-
+    const unique = contacts.filter((user)=> {
+      return String(user._id) !== String(req.user._id);
+    });
     return res.send({
       message: "Your friends list",
-      data: contacts,
+      data:unique
     });
   } catch (err) {
     next(err);

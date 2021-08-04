@@ -70,9 +70,10 @@ const manageInvite = async (req, res, next) => {
 
 const getAllInvitations = async (req, res, next) => {
   try {
-    const inviations = await Invitation.find({ toUser: req.user._id }).populate(
+    const inviations = await Invitation.find({ toUser: req.user._id, isAccepted: false }).populate(
       "fromUser"
     );
+    console.log(inviations);
     return res.status(200).json({
       message: "Invitations list",
       data: inviations,
