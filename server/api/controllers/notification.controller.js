@@ -1,26 +1,17 @@
 const APIError = require("../utils/APIError");
 const { admin } = require("../../config/firebase");
+const { sendPushNotification } = require("../services/notification.service");
 
-const notification_options = {
-  priority: "high",
-  timeToLive: 60 * 60 * 24,
+const sendNotification = async (req, res, next) => {
+  try {
+    const registrationToken = req.body.deviceToken;
+    console.log(req.body);
+    const message = req.body.message;
+    await sendPushNotification(registrationToken, message);
+    return res.status(200).json({ message: "Notification sent successfully" });
+  } catch (err) {
+    next(err);
+  }
 };
 
-const sendPushNotification = async (req, res, next) => {
-  const registrationToken = req.user.deviceToken;
-  console.log(req.body);
-  const message = req.body.message;
-  const options = notification_options;
-
-  admin
-    .messaging()
-    .sendToDevice(registrationToken, message, options)
-    .then((response) => {
-      res.status(200).send("Notification sent successfully");
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-};
-
-module.exports = { sendPushNotification };
+module.exports = { sendNotification };

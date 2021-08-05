@@ -10,6 +10,7 @@ const {
   allUsers,
   updateUserProfilePicture,
   fetchUserById,
+  updateUserById
 } = require("../../controllers/users.controller");
 
 const { validateUser, upload } = require("../../middlewares");
@@ -34,13 +35,14 @@ router.post(
           errors: [{ title: "Image Upload Error", detail: err.message }],
         });
       }
-      req.user.profile_picture = req.file.location;
+      console.log(req);
+      req.user.profile_picture = req.file && req.file.location;
       next();
     });
   },
   updateUserProfilePicture
 );
-
+router.patch("/:id",validateUser, updateUserById);
 router.get("/:id", validateUser, fetchUserById);
 router.post("/verify-account", verifyAccount);
 

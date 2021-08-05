@@ -1,32 +1,35 @@
-var ObjectId = require('mongoose').Types.ObjectId;
-const { Users, Invitation, Friends } = require("../models");
+const ObjectId = require("mongoose").Types.ObjectId;
+const { Invitation } = require("../models");
 const APIError = require("../utils/APIError");
+const { getAllFriendsList } = require("../services/friends.service");
 
 const getAllFriends = async (req, res, next) => {
   try {
-    const myInitiated = await Invitation.find({
-      isAccepted: true,
-      fromUser: req.user._id,
-    }).populate("toUser");
-
-    const gotInvited = await Invitation.find({
-      isAccepted: true,
-      toUser: req.user._id,
-    }).populate("fromUser");
-
-    let contacts = [...myInitiated, ...gotInvited].map((obj) => {
-      return ObjectId.isValid(obj.fromUser) ? obj.toUser : obj.fromUser;
-    })
-    const unique = contacts.filter((user)=> {
-      return String(user._id) !== String(req.user._id);
-    });
-    return res.send({
+    const uniqueFriends = await getAllFriendsList(req.user);
+    return res.status(200).send({
       message: "Your friends list",
-      data:unique
+      data: uniqueFriends,
     });
   } catch (err) {
     next(err);
   }
 };
 
-module.exports = { getAllFriends };
+const validateFriends = async (req, res, next) => {
+  try {
+    const uniqueFriends = await getAllFriendsList(req.user);
+    console.log(uniqueFriends);
+    console.log(req.query);
+    const filteredFriends = uniqueFriends.filter((usr) => req.query.to.includes(usr.extension));
+    filteredFriends.push(req.user);
+    res.status(200).json({
+      message: "callee details",
+      data: filteredFriends,
+      user: req.user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { getAllFriends, validateFriends };

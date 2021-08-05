@@ -13,9 +13,10 @@ const Invitation = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
-    isAccepted: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum : ['created','accepted','declined'],
+      default: 'created'
     },
   },
   { timestamps: true }

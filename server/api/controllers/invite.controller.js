@@ -1,12 +1,13 @@
 const { Users, Invitation, Friends } = require("../models");
 const APIError = require("../utils/APIError");
+const { sendPushNotification } = require("../services/notification.service");
 
 const inviteUser = async (req, res, next) => {
   try {
     let { email } = req.body;
     let { first_name, last_name } = req.user;
-    let userExist = await Users.findOne({ email, is_verified: true });
-    if (userExist) {
+    let userExist = await Users.findOne({ email });
+    if (userExist && userExist.is_verified) {
       const invitationObj = await Invitation.findOne({
         $or: [
           { fromUser: userExist._id, toUser: req.user._id },
@@ -15,7 +16,15 @@ const inviteUser = async (req, res, next) => {
       });
       if (!invitationObj) {
         // send push notification to user
-
+        const message = {
+          notification: {
+            title: `${req.user.first_name} ${req.user.last_name} has sent you request`,
+          },
+          data: {
+            type: "invite",
+          },
+        };
+        await sendPushNotification(userExist.deviceToken, message);
         await Invitation.findOneAndUpdate(
           { fromUser: req.user._id, toUser: userExist._id },
           { fromUser: req.user._id, toUser: userExist._id },
@@ -45,14 +54,14 @@ const inviteUser = async (req, res, next) => {
 
 const manageInvite = async (req, res, next) => {
   try {
-    let { invitationId, isAccepted } = req.body;
+    let { invitationId, status } = req.body;
     let { _id } = req.user;
     const invitationObj = await Invitation.findOneAndUpdate(
       { _id: invitationId, toUser: _id },
-      { isAccepted },
+      { status },
       { new: true }
     );
-    if (isAccepted) {
+    if (status === "accepted") {
       await Friends.findOneAndUpdate(
         { user: _id },
         { $addToSet: { contacts: invitationObj.fromUser } },
@@ -60,7 +69,8 @@ const manageInvite = async (req, res, next) => {
       );
     }
     return res.send({
-      message: isAccepted ? "User added successfully." : "Invite Declined.",
+      message:
+        status === "accepted" ? "User added successfully." : "Invite Declined.",
       success: true,
     });
   } catch (error) {
@@ -70,9 +80,10 @@ const manageInvite = async (req, res, next) => {
 
 const getAllInvitations = async (req, res, next) => {
   try {
-    const inviations = await Invitation.find({ toUser: req.user._id, isAccepted: false }).populate(
-      "fromUser"
-    );
+    const inviations = await Invitation.find({
+      toUser: req.user._id,
+      status: "created",
+    }).populate("fromUser");
     console.log(inviations);
     return res.status(200).json({
       message: "Invitations list",
@@ -83,4 +94,15 @@ const getAllInvitations = async (req, res, next) => {
   }
 };
 
-module.exports = { inviteUser, manageInvite, getAllInvitations };
+const deleteAllInvitations = async (req, res, next) => {
+  try {
+    const inviations = await Invitation.remove({});
+    return res.status(200).json({
+      message: "All Invitations deleted",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = { inviteUser, manageInvite, getAllInvitations, deleteAllInvitations };

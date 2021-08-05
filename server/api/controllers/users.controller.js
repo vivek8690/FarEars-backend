@@ -22,7 +22,7 @@ const sendVerificationEmail = async (req, res, next) => {
     if (!user) {
       throw new APIError({
         message: "User not found with this email ID",
-        errCode: 'email_not_registered',
+        errCode: "email_not_registered",
         status: 400,
       });
     }
@@ -182,7 +182,7 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-const allUsers = async (req, res) => {
+const allUsers = async (req, res, next) => {
   try {
     const users = await Users.find().select("-password");
     return res.send({
@@ -190,7 +190,7 @@ const allUsers = async (req, res) => {
       data: users,
     });
   } catch (err) {
-    throw err;
+    next(err);
   }
 };
 
@@ -210,7 +210,7 @@ const updateUserProfilePicture = async (req, res, next) => {
   }
 };
 
-const fetchUserById = async (req, res) => {
+const fetchUserById = async (req, res, next) => {
   try {
     let { id } = req.params;
     let user = await Users.findById(id);
@@ -223,6 +223,23 @@ const fetchUserById = async (req, res) => {
   }
 };
 
+const updateUserById = async (req, res, next) => {
+  try {
+    const { first_name, last_name } = req.body;
+    let user = await Users.findOneAndUpdate(
+      { _id: req.user._id },
+      { first_name, last_name },
+      { new: true }
+    );
+    return res.send({
+      message: "User updated Successfully.",
+      data: user,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   registerUser,
   login,
@@ -230,5 +247,6 @@ module.exports = {
   allUsers,
   updateUserProfilePicture,
   fetchUserById,
-  sendVerificationEmail
+  sendVerificationEmail,
+  updateUserById,
 };

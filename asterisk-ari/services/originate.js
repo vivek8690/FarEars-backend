@@ -1,9 +1,11 @@
 const { getClientObj, holdingBridge } = require("./confbridge");
+const { sendPushNotification } = require("../services/notification");
 
-const inviteToBridge = async function (inviteTo, inviteIn, from) {
+const inviteToBridge = async function (inviteTo, inviteIn, fromUser) {
   const clientObj = getClientObj();
   try {
-    console.log("inviteTo", inviteTo);
+    console.log("callerId", `${fromUser.first_name} ${fromUser.last_name}`);
+    console.log("inviteTo", inviteTo.extension);
     console.log("inviteIn", inviteIn);
     // create a new channel
     var dialed = clientObj.Channel();
@@ -14,6 +16,9 @@ const inviteToBridge = async function (inviteTo, inviteIn, from) {
     if (mixingBridge) {
       await clientObj.bridges.destroy({ bridgeId: inviteIn });
     }
+    dialed.on("ChannelStateChange", function (event, channel) {
+      console.log("Channel %s is now: %s", channel.name, channel.state);
+    });
 
     dialed.on("StasisStart", function (event, dialed) {
       joinMixingBridge(inviteIn, dialed);
@@ -22,15 +27,33 @@ const inviteToBridge = async function (inviteTo, inviteIn, from) {
 
     dialed.originate(
       {
-        endpoint: `PJSIP/${inviteTo}`,
+        endpoint: `PJSIP/${inviteTo.extension}`,
         app: "ari-test",
         appArgs: "dialed",
-        callerId: "Walkie-talkie",
         context: "testing",
+        callerId: `${fromUser.first_name} ${fromUser.last_name}`,
+        variables: { profile: fromUser.profile },
       },
-      function (err, dialed) {
+      function (err, dialedObj) {
         if (err) {
-          console.log("dialed extension is not registered in asterisk",err);
+          if (JSON.parse(err.message).error == "Allocation failed") {
+            sendPushNotification(inviteTo, fromUser);
+            setTimeout(() => {
+              dialed.originate(
+                {
+                  endpoint: `PJSIP/${inviteTo.extension}`,
+                  app: "ari-test",
+                  appArgs: "dialed",
+                  context: "testing",
+                  callerId: `${fromUser.first_name} ${fromUser.last_name}`,
+                  variables: { profile: fromUser.profile },
+                },
+                function (err, dialedObj) {
+                  console.log(`${inviteTo.email} seems to be offline`);
+                }
+              );
+            }, 2000);
+          }
         }
       }
     );
@@ -57,7 +80,7 @@ const inviteToBridge = async function (inviteTo, inviteIn, from) {
       //   dialedExit(dialed, mixingBridge);
       // });
 
-      if (inviteTo === from) {
+      if (inviteTo.extension === fromUser.extension) {
         dialed.on("ChannelDestroyed", function (event, dialed) {
           dialedExit(dialed, mixingBridge);
         });
@@ -79,6 +102,18 @@ const inviteToBridge = async function (inviteTo, inviteIn, from) {
           type: "mixing,dtmf_events",
           bridgeId: inviteIn,
         });
+        clientObj.bridges
+          .record({
+            maxDurationSeconds: 5,
+            maxSilenceSeconds: 2,
+            format: "gsm",
+            ifExists: "overwrite",
+            bridgeId: mixingBridge.id,
+            name: mixingBridge.id,
+          })
+          .then(function (liverecording) {})
+          .catch(function (err) {});
+
         console.log("new bridge created::", mixingBridge.id);
       }
       console.log("initially", mixingBridge.channels);
