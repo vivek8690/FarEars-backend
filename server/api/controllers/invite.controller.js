@@ -60,20 +60,30 @@ const manageInvite = async (req, res, next) => {
       { _id: invitationId, toUser: _id },
       { status },
       { new: true }
-    );
+    ).populate('fromUser');
     if (status === "accepted") {
       await Friends.findOneAndUpdate(
         { user: _id },
         { $addToSet: { contacts: invitationObj.fromUser } },
         { new: true, upsert: true }
       );
+      const message = {
+        notification: {
+          title: `${req.user.first_name} ${req.user.last_name} has accepted your request`,
+        },
+        data: {
+          type: "user_list",
+        },
+      };
+      await sendPushNotification(invitationObj.fromUser.deviceToken, message);
     }
     return res.send({
       message:
         status === "accepted" ? "User added successfully." : "Invite Declined.",
       success: true,
     });
-  } catch (error) {
+  } catch (err) {
+    console.log(err);
     next(err);
   }
 };
@@ -84,7 +94,6 @@ const getAllInvitations = async (req, res, next) => {
       toUser: req.user._id,
       status: "created",
     }).populate("fromUser");
-    console.log(inviations);
     return res.status(200).json({
       message: "Invitations list",
       data: inviations,

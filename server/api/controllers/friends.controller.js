@@ -18,8 +18,6 @@ const getAllFriends = async (req, res, next) => {
 const validateFriends = async (req, res, next) => {
   try {
     const uniqueFriends = await getAllFriendsList(req.user);
-    console.log(uniqueFriends);
-    console.log(req.query);
     const filteredFriends = uniqueFriends.filter((usr) => req.query.to.includes(usr.extension));
     filteredFriends.push(req.user);
     res.status(200).json({

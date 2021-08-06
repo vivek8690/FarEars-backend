@@ -10,7 +10,7 @@ const { OTPModel, Users, Invitation, Friends, Groups } = require("../models");
 
 const { sendEmail } = require("../services");
 const { sendOTPEmail } = require("../services/user.service");
-
+const { imageUpload } = require("../services/s3.service");
 const { getRandomNumber, createToken } = require("../utils");
 
 const sendVerificationEmail = async (req, res, next) => {
@@ -30,8 +30,8 @@ const sendVerificationEmail = async (req, res, next) => {
     return res.send({
       message: "Verification Email Has Been Sent",
     });
-  } catch (e) {
-    next(e);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -91,8 +91,8 @@ const verifyAccount = async (req, res, next) => {
         status: 400,
       });
     }
-  } catch (e) {
-    next(e);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -139,8 +139,8 @@ const login = async (req, res, next) => {
         status: 400,
       });
     }
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -177,8 +177,8 @@ const registerUser = async (req, res, next) => {
         data: userResp,
       });
     }
-  } catch (e) {
-    throw next(e);
+  } catch (err) {
+    throw next(err);
   }
 };
 
@@ -196,17 +196,19 @@ const allUsers = async (req, res, next) => {
 
 const updateUserProfilePicture = async (req, res, next) => {
   try {
+    const base64 = req.body.image;
+    const location = await imageUpload(base64, req.user._id);
     let newData = await Users.findOneAndUpdate(
       { email: req.user.email },
-      { profile: req.user.profile_picture },
+      { profile: location },
       { new: true }
     );
     return res.send({
       message: "Profile Picture Updated Successfully.",
       data: newData,
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 

@@ -13,7 +13,7 @@ const handler = (err, req, res) => {
 		message: err.message || httpStatus[err.status],
 		errors: err.errors,
 		stack: err.stack,
-		errCode: err.errCode
+		errCode: err.errCode || 'Unhandled_code'
 	};
 
 	if (env !== 'development') {
@@ -37,7 +37,7 @@ exports.converter = (err, req, res, next) => {
 			errors: err.errors,
 			status: err.status,
 			stack: err.stack,
-			errCode: err.errCode
+			errCode: err.errCode || 'Unhandled_code'
 
 		});
 		return handler(convertedError, req, res);
