@@ -197,16 +197,26 @@ const allUsers = async (req, res, next) => {
 const updateUserProfilePicture = async (req, res, next) => {
   try {
     const base64 = req.body.image;
-    const location = await imageUpload(base64, req.user._id);
-    let newData = await Users.findOneAndUpdate(
-      { email: req.user.email },
-      { profile: location },
-      { new: true }
-    );
-    return res.send({
-      message: "Profile Picture Updated Successfully.",
-      data: newData,
-    });
+    let user;
+    if (base64) {
+      const location = await imageUpload(base64, req.user._id);
+      user = await Users.findOne(
+        { email: req.user.email }
+      );
+      user.profile = location;
+      await user.save();
+      return res.send({
+        message: "Profile Picture Updated Successfully.",
+        data: user,
+      });
+    } else {
+      user.profile = base64;
+      await user.save();
+      return res.send({
+        message: "Profile Picture Updated Successfully.",
+        data: user,
+      });
+    }
   } catch (err) {
     next(err);
   }
