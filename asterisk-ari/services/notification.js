@@ -22,4 +22,21 @@ const sendPushNotification = async (toUser, fromUser) => {
     console.log(err);
   }
 };
-module.exports = { sendPushNotification };
+
+const sendNotificationByExt = async (toExt) => {
+  try {
+    const body = {
+      extension: toExt,
+      message: {
+        data: {
+          type: "asterisk",
+          details: `Register in asterisk`
+        },
+      },
+    };
+    await axios.post("http://localhost:3000/api/notification/byExtension", body);
+  } catch (err) {
+    console.log(err);
+  }
+};
+module.exports = { sendPushNotification, sendNotificationByExt };

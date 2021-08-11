@@ -2,11 +2,11 @@ const { getClientObj, holdingBridge } = require("./confbridge");
 const { sendPushNotification } = require("../services/notification");
 
 const inviteToBridge = async function (inviteTo, inviteIn, fromUser) {
+  console.log(inviteTo);
   const clientObj = getClientObj();
   try {
     console.log("callerId", `${fromUser.first_name} ${fromUser.last_name}`);
     console.log("inviteTo", inviteTo.extension);
-    console.log("inviteIn", inviteIn);
     // create a new channel
     var dialed = clientObj.Channel();
     const bridges = await clientObj.bridges.list();
@@ -27,12 +27,13 @@ const inviteToBridge = async function (inviteTo, inviteIn, fromUser) {
 
     dialed.originate(
       {
-        endpoint: `PJSIP/${inviteTo.extension}`,
+        endpoint: `PJSIP/${inviteTo.extension}(${fromUser.extension})`,
         app: "ari-test",
         appArgs: "dialed",
         context: "testing",
-        callerId: `${fromUser.first_name} ${fromUser.last_name}`,
+        callerId: `${fromUser.first_name} ${fromUser.last_name}@${fromUser.extension}@${fromUser.profile}`,
         variables: { profile: fromUser.profile },
+        timeout: 10,
       },
       function (err, dialedObj) {
         if (err) {
@@ -45,11 +46,12 @@ const inviteToBridge = async function (inviteTo, inviteIn, fromUser) {
                   app: "ari-test",
                   appArgs: "dialed",
                   context: "testing",
-                  callerId: `${fromUser.first_name} ${fromUser.last_name}`,
+                  callerId: `${fromUser.first_name} ${fromUser.last_name}@${fromUser.extension}@${fromUser.profile}`,
                   variables: { profile: fromUser.profile },
+                  timeout: 10,
                 },
                 function (err, dialedObj) {
-                  console.log(`${inviteTo.email} seems to be offline`);
+                  console.log(`${inviteTo.email}(${inviteTo.extension}) seems to be offline`);
                 }
               );
             }, 2000);

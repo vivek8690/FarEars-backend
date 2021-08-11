@@ -89,8 +89,8 @@ RUN  cd $HOME/asterisk-$VERSION_ASTERISK && \
     ldconfig && \
     make && \
     make config && \
-    make install-logrotate 
-    
+    make install-logrotate
+
 RUN cp $HOME/ast_mongo/test_bench/configs/* /etc/asterisk/
 
 RUN echo "[general]\n\
@@ -123,7 +123,7 @@ RUN echo "[general]\n\
         autofallthrough=no\n\
         \n\
         [testing]\n\
-        exten => _XXXXX,1,Noop()\n\
+        exten => _XXXX,1,Noop()\n\
         same => n,Stasis(ari-test)\n\
         same => n,Hangup()" > /etc/asterisk/extensions.conf && \
     echo " ;\n\
