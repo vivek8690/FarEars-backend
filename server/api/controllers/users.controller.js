@@ -221,11 +221,24 @@ const updateUserProfilePicture = async (req, res, next) => {
     next(err);
   }
 };
-
 const fetchUserById = async (req, res, next) => {
   try {
     let { id } = req.params;
     let user = await Users.findById(id);
+    return res.send({
+      message: "User fetched Successfully.",
+      data: user,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+const fetchUserByExtension = async (req, res, next) => {
+  try {
+    let { id } = req.params;
+    let user = await Users.findOne({extension: id});
     return res.send({
       message: "User fetched Successfully.",
       data: user,
@@ -259,6 +272,7 @@ module.exports = {
   allUsers,
   updateUserProfilePicture,
   fetchUserById,
+  fetchUserByExtension,
   sendVerificationEmail,
   updateUserById,
 };

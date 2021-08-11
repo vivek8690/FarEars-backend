@@ -1,7 +1,7 @@
 /*jshint node:true*/
 "use strict";
 var ari = require("ari-client");
-const { sendNotificationByExt } = require("../services/notification");
+const { sendNotificationByExt, getExtensionDetails } = require("../services/notification");
 var clientObj, holdingBridge;
 
 // following details you can find from /etc/asterisk/ari.conf and /etc/asterisk/http.conf
@@ -36,7 +36,7 @@ function clientLoaded(err, client) {
       });
     }
   }
-  function originate(channel) {
+  async function originate(channel) {
     console.log(channel.dialplan);
     var dialed = client.Channel();
     channel.on("StasisEnd", function (event, channel) {
@@ -49,11 +49,14 @@ function clientLoaded(err, client) {
       joinMixingBridge(channel, dialed);
       dialed.mute({ direction: "in" });
     });
+    const user = await getExtensionDetails(channel.dialplan.exten);
+    console.log(`dial to :::${user.first_name} ${user.last_name}`);
     dialed.originate(
       {
         endpoint: `PJSIP/${channel.dialplan.exten}`,
         app: "ari-test",
         appArgs: "dialed",
+        callerId: `${user.first_name} ${user.last_name}@${user.extension}@${user.profile}`,
         context: "testing",
         timeout: 5,
       },
@@ -67,11 +70,12 @@ function clientLoaded(err, client) {
                   endpoint: `PJSIP/${channel.dialplan.exten}`,
                   app: "ari-test",
                   appArgs: "dialed",
+                  callerId: `${user.first_name} ${user.last_name}@${user.extension}@${user.profile}`,
                   context: "testing",
                   timeout: 5,
                 },
                 function (err, dialedObj) {
-                  console.log(`${channel.dialplan.exten} seems to be offline`);
+                  console.log(`${user.first_name} ${user.last_name} seems to be offline`);
                 }
               );
             }, 2000);

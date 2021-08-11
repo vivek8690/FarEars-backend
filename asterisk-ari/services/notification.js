@@ -13,7 +13,7 @@ const sendPushNotification = async (toUser, fromUser) => {
       message: {
         data: {
           type: "asterisk",
-          details: `${fromUser.first_name} ${fromUser.last_name} sending you PTT`
+          details: `${fromUser.first_name} ${fromUser.last_name} sending you PTT`,
         },
       },
     };
@@ -27,16 +27,31 @@ const sendNotificationByExt = async (toExt) => {
   try {
     const body = {
       extension: toExt,
+      expiry: 5, // in seconds
       message: {
         data: {
           type: "asterisk",
-          details: `Register in asterisk`
+          details: `Register in asterisk`,
         },
       },
     };
-    await axios.post("http://localhost:3000/api/notification/byExtension", body);
+    await axios.post(
+      "http://localhost:3000/api/notification/byExtension",
+      body
+    );
   } catch (err) {
     console.log(err);
   }
 };
-module.exports = { sendPushNotification, sendNotificationByExt };
+
+const getExtensionDetails = async (toExt) => {
+  try {
+    const user = await axios.get(
+      `http://localhost:3000/api/users/extension/${toExt}`
+    );
+    return user.data.data;
+  } catch (err) {
+    console.log(err);
+  }
+};
+module.exports = { sendPushNotification, sendNotificationByExt, getExtensionDetails };
