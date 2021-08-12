@@ -1,7 +1,10 @@
 /*jshint node:true*/
 "use strict";
 var ari = require("ari-client");
-const { sendNotificationByExt, getExtensionDetails } = require("../services/notification");
+const {
+  sendNotificationByExt,
+  getExtensionDetails,
+} = require("../services/notification");
 var clientObj, holdingBridge;
 
 // following details you can find from /etc/asterisk/ari.conf and /etc/asterisk/http.conf
@@ -16,12 +19,18 @@ function clientLoaded(err, client) {
     // ensure the channel is not a dialed channel
     var dialed = event.args[0] === "dialed";
     if (!dialed) {
-      console.log(event.args[0]);
       channel.answer(function (err) {
         if (err) {
           throw err;
         }
         console.log("Channel %s has entered our application", channel.name);
+        client.recordings
+          .listStored()
+          .then(function (storedrecordings) {
+            console.log("storedrecordings",storedrecordings.map(x => x.name));
+          })
+          .catch(function (err) {});
+
         var playback = client.Playback();
         channel.play(
           { media: "sound:pls-wait-connect-call" },
@@ -49,7 +58,7 @@ function clientLoaded(err, client) {
       joinMixingBridge(channel, dialed);
       dialed.mute({ direction: "in" });
     });
-    const user = await getExtensionDetails(channel.dialplan.exten);
+    const user = await getExtensionDetails(channel.caller.number);
     console.log(`dial to :::${user.first_name} ${user.last_name}`);
     dialed.originate(
       {
@@ -58,7 +67,7 @@ function clientLoaded(err, client) {
         appArgs: "dialed",
         callerId: `${user.first_name} ${user.last_name}@${user.extension}@${user.profile}`,
         context: "testing",
-        timeout: 5,
+        timeout: 20,
       },
       function (err, dialedObj) {
         if (err) {
@@ -72,10 +81,12 @@ function clientLoaded(err, client) {
                   appArgs: "dialed",
                   callerId: `${user.first_name} ${user.last_name}@${user.extension}@${user.profile}`,
                   context: "testing",
-                  timeout: 5,
+                  timeout: 20,
                 },
                 function (err, dialedObj) {
-                  console.log(`${user.first_name} ${user.last_name} seems to be offline`);
+                  console.log(
+                    `${user.first_name} ${user.last_name} seems to be offline`
+                  );
                 }
               );
             }, 2000);
@@ -120,8 +131,10 @@ function clientLoaded(err, client) {
       if (err) {
         throw err;
       }
+
       console.log("Created bridge %s", bridge.id);
       addChannelsToBridge(channel, dialed, bridge);
+      recordBridge(bridge);
     });
   } // handler for the dialed channel leaving Stasis
   function dialedExit(dialed, bridge) {
@@ -149,6 +162,18 @@ function clientLoaded(err, client) {
       }
     });
   }
+  function recordBridge(bridge) {
+    bridge.record(
+      { bridgeId: bridge.id, format: "wav", name: bridge.id },
+      function (err, liverecording) {
+        console.log("liverecording", liverecording);
+        if (err) {
+          console.log(err);
+        }
+      }
+    );
+  }
+
   client.on("StasisStart", stasisStart);
   client.start("ari-test");
   clientObj = client;
