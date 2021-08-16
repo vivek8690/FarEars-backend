@@ -7,6 +7,7 @@ const Users = require("./user.model");
 const Groups = require("./groups.model");
 const Invitation = require("./invitation.model");
 const Friends = require("./friends.model");
+const CDR = require("./cdr.model");
 
 module.exports = {
   PSAors,
@@ -18,4 +19,5 @@ module.exports = {
   Groups,
   Invitation,
   Friends,
+  CDR
 };

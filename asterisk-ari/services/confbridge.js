@@ -4,8 +4,11 @@ var ari = require("ari-client");
 const {
   sendNotificationByExt,
   getExtensionDetails,
+  sendMissedPTTNotification,
+  incomingPTTNotification
 } = require("../services/notification");
 var clientObj, holdingBridge;
+console.log("loaded");
 
 // following details you can find from /etc/asterisk/ari.conf and /etc/asterisk/http.conf
 ari.connect("http://localhost:8088", "asterisk", "asterisk", clientLoaded);
@@ -24,23 +27,23 @@ function clientLoaded(err, client) {
           throw err;
         }
         console.log("Channel %s has entered our application", channel.name);
-        client.recordings
-          .listStored()
-          .then(function (storedrecordings) {
-            console.log("storedrecordings",storedrecordings.map(x => x.name));
-          })
-          .catch(function (err) {});
+        // client.recordings
+        //   .listStored()
+        //   .then(function (storedrecordings) {
+        //     // console.log("storedrecordings",storedrecordings.map(x => x.name));
+        //   })
+        //   .catch(function (err) {});
 
-        var playback = client.Playback();
-        channel.play(
-          { media: "sound:pls-wait-connect-call" },
-          playback,
-          function (err, playback) {
-            if (err) {
-              throw err;
-            }
-          }
-        );
+        // var playback = client.Playback();
+        // channel.play(
+        //   { media: "sound:pls-wait-connect-call" },
+        //   playback,
+        //   function (err, playback) {
+        //     if (err) {
+        //       throw err;
+        //     }
+        //   }
+        // );
         originate(channel);
       });
     }
@@ -58,14 +61,16 @@ function clientLoaded(err, client) {
       joinMixingBridge(channel, dialed);
       dialed.mute({ direction: "in" });
     });
-    const user = await getExtensionDetails(channel.caller.number);
-    console.log(`dial to :::${user.first_name} ${user.last_name}`);
+    const caller = await getExtensionDetails(channel.caller.number);
+    const callee = await getExtensionDetails(channel.dialplan.exten);
+    console.log(`dial to :::${callee.first_name} ${callee.last_name}`);
+    incomingPTTNotification(callee.extension,caller);
     dialed.originate(
       {
         endpoint: `PJSIP/${channel.dialplan.exten}`,
         app: "ari-test",
         appArgs: "dialed",
-        callerId: `${user.first_name} ${user.last_name}@${user.extension}@${user.profile}`,
+        callerId: `${caller.first_name} ${caller.last_name}@${caller.extension}@${caller.profile}`,
         context: "testing",
         timeout: 20,
       },
@@ -79,13 +84,14 @@ function clientLoaded(err, client) {
                   endpoint: `PJSIP/${channel.dialplan.exten}`,
                   app: "ari-test",
                   appArgs: "dialed",
-                  callerId: `${user.first_name} ${user.last_name}@${user.extension}@${user.profile}`,
+                  callerId: `${caller.first_name} ${caller.last_name}@${caller.extension}@${caller.profile}`,
                   context: "testing",
                   timeout: 20,
                 },
                 function (err, dialedObj) {
+                  sendMissedPTTNotification(channel.dialplan.exten,caller);
                   console.log(
-                    `${user.first_name} ${user.last_name} seems to be offline`
+                    `${callee.first_name} ${callee.last_name} seems to be offline`
                   );
                 }
               );
@@ -166,7 +172,7 @@ function clientLoaded(err, client) {
     bridge.record(
       { bridgeId: bridge.id, format: "wav", name: bridge.id },
       function (err, liverecording) {
-        console.log("liverecording", liverecording);
+        // console.log("liverecording", liverecording);
         if (err) {
           console.log(err);
         }

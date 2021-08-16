@@ -44,6 +44,46 @@ const sendNotificationByExt = async (toExt) => {
   }
 };
 
+const sendMissedPTTNotification = async (toExt, callee) => {
+  try {
+    const message = {
+      notification: {
+        title: `You missed PTT from ${callee.first_name} ${callee.last_name}`,
+      },
+      data: {
+        type: "missed_ptt",
+      },
+    };
+    const body = {
+      extension: toExt,
+      message: message
+    };
+    await axios.post("http://localhost:3000/api/notification/byExtension", body);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+const incomingPTTNotification = async (toExt, caller) => {
+  try {
+    const message = {
+      notification: {
+        title: `You missed PTT from ${caller.first_name} ${caller.last_name}`,
+      },
+      data: {
+        type: "incoming_ptt",
+      },
+    };
+    const body = {
+      extension: toExt,
+      message: message
+    };
+    await axios.post("http://localhost:3000/api/notification/byExtension", body);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 const getExtensionDetails = async (toExt) => {
   try {
     const user = await axios.get(
@@ -54,4 +94,10 @@ const getExtensionDetails = async (toExt) => {
     console.log(err);
   }
 };
-module.exports = { sendPushNotification, sendNotificationByExt, getExtensionDetails };
+module.exports = {
+  sendPushNotification,
+  sendNotificationByExt,
+  getExtensionDetails,
+  sendMissedPTTNotification,
+  incomingPTTNotification
+};

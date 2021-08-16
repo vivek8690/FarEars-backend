@@ -11,7 +11,8 @@ const {
   updateUserProfilePicture,
   fetchUserById,
   updateUserById,
-  fetchUserByExtension
+  fetchUserByExtension,
+  changePassword
 } = require("../../controllers/users.controller");
 
 const { validateUser } = require("../../middlewares");
@@ -25,6 +26,8 @@ router.post("/send-verification-email", isUserVerified, sendVerificationEmail);
 router.post("/login", login);
 
 router.post("/upload", validateUser, updateUserProfilePicture);
+router.patch("/changePassword", validateUser, changePassword);
+
 router.patch("/:id", validateUser, updateUserById);
 router.get("/:id", validateUser, fetchUserById);
 router.post("/verify-account", verifyAccount);

@@ -5,7 +5,10 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const randomize = require("randomatic");
 const APIError = require("../utils/APIError");
-const { createExtension } = require("../services/asterisk");
+const {
+  createExtension,
+  createAsteriskPassword,
+} = require("../services/asterisk");
 const { OTPModel, Users, Invitation, Friends, Groups } = require("../models");
 
 const { sendEmail } = require("../services");
@@ -134,7 +137,7 @@ const login = async (req, res, next) => {
       });
     } else {
       throw new APIError({
-        message: "Invalid credencials",
+        message: "Email/Password is wrong",
         errCode: "invalid_creds",
         status: 400,
       });
@@ -182,6 +185,35 @@ const registerUser = async (req, res, next) => {
   }
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    let userData = await bcrypt.compare(oldPassword, req.user.password);
+    if (userData) {
+      let user = await Users.findOne({
+        email: req.user.email,
+      });
+      let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
+      let hashedPassword = await bcrypt.hash(newPassword, salt);
+      await createAsteriskPassword(newPassword, req.user.extension);
+      user.password = hashedPassword;
+      await user.save();
+      res.status(200).json({
+        message: "Password changed successfully",
+        status: true,
+      });
+    } else {
+      throw new APIError({
+        message: "Old password is wrong",
+        errCode: "invalid_creds",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    throw next(err);
+  }
+};
+
 const allUsers = async (req, res, next) => {
   try {
     const users = await Users.find().select("-password");
@@ -200,9 +232,7 @@ const updateUserProfilePicture = async (req, res, next) => {
     let user;
     if (base64) {
       const location = await imageUpload(base64, req.user._id);
-      user = await Users.findOne(
-        { email: req.user.email }
-      );
+      user = await Users.findOne({ email: req.user.email });
       user.profile = location;
       await user.save();
       return res.send({
@@ -232,13 +262,12 @@ const fetchUserById = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}
-
+};
 
 const fetchUserByExtension = async (req, res, next) => {
   try {
     let { id } = req.params;
-    let user = await Users.findOne({extension: id});
+    let user = await Users.findOne({ extension: id });
     return res.send({
       message: "User fetched Successfully.",
       data: user,
@@ -275,4 +304,5 @@ module.exports = {
   fetchUserByExtension,
   sendVerificationEmail,
   updateUserById,
+  changePassword,
 };
