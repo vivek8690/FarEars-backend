@@ -208,8 +208,8 @@ RUN echo "[general]\n\
         uri=$DATABASE_HOST/$DATABASE_NAME?authSource=admin\n\
         \n\
         [cdr]\n\
-        uri=$DATABASE_HOST/cdr?authSource=admin\n\
-        database=cdr\n\
+        uri=$DATABASE_HOST/asterisk?authSource=admin\n\
+        database=asterisk\n\
         collection=cdr\n\
         \n\
         [cel]\n\
