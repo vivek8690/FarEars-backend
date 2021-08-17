@@ -1,4 +1,4 @@
-# Critic Caller Server
+# FarEars Server
 
 ## Installation
 
