@@ -24,10 +24,10 @@ services:
       - "3000:3000"
     command: npm run dev
     build:
-      context: ./server
+      context: ./core-server
       dockerfile: Dockerfile
     volumes:
-      - ./server:/usr/src/app
+      - ./core-server:/usr/src/app
   asterisk-ari:
     image: node
     container_name: asterisk-ari

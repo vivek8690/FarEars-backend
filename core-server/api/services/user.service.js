@@ -10,7 +10,7 @@ const sendOTPEmail = async (email) => {
     const otp = randomize("000000");
     let emailStatus = await sendEmail({
       to: email,
-      subject: "RogerThat Account Verification",
+      subject: "FarEars Account Verification",
       html: `OTP For Account Verification is ${otp}`,
       text: otp,
     });
