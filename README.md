@@ -1,11 +1,11 @@
-# FarEars Server
+# FarEars Backend
 
 ## Installation
 
 ```
-git clone https://github.com/vivek8690/asterisk-mongo/
-cd asterisk-mongo
-docker-compose up
+git clone https://github.com/vivek8690/FarEars-backend/
+cd FarEars-backend
+docker-compose up -d
 ```
 
 #### Postman collection for APIs:
