@@ -89,10 +89,12 @@ function clientLoaded(err, client) {
                   timeout: 20,
                 },
                 function (err, dialedObj) {
-                  sendMissedPTTNotification(channel.dialplan.exten,caller);
-                  console.log(
-                    `${callee.first_name} ${callee.last_name} seems to be offline`
-                  );
+                  if(err){
+                    sendMissedPTTNotification(channel.dialplan.exten,caller);
+                    console.log(
+                      `${callee.first_name} ${callee.last_name} seems to be offline`
+                    );
+                  }
                 }
               );
             }, 2000);

@@ -3,6 +3,7 @@ services:
   asterisk:
     image: ast_mongo-asterisk:16.0.0
     container_name: asterisk
+    restart: always
     privileged: true
     tty: true
     build:
@@ -19,6 +20,7 @@ services:
       - /var/log/asterisk:/var/log/asterisk
   nodejs:
     image: node
+    restart: always
     container_name: node_server
     ports:
       - "3000:3000"
@@ -32,6 +34,7 @@ services:
     image: node
     container_name: asterisk-ari
     network_mode: "host"
+    restart: always
     ports:
       - "4000:4000"
     command: npm run dev
