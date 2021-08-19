@@ -12,7 +12,9 @@ const {
   fetchUserById,
   updateUserById,
   fetchUserByExtension,
-  changePassword
+  changePassword,
+  forgotPasswordOTP,
+  forgotPasswordVerify
 } = require("../../controllers/users.controller");
 
 const { validateUser } = require("../../middlewares");
@@ -20,6 +22,10 @@ const { validateUser } = require("../../middlewares");
 router.get("/", allUsers);
 
 router.post("/register", registerUser);
+router.post("/forgot-password", forgotPasswordOTP);
+router.post("/forgot-password-verify", forgotPasswordVerify);
+
+
 
 router.post("/send-verification-email", isUserVerified, sendVerificationEmail);
 
