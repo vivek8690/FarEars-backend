@@ -5,13 +5,16 @@ const {
   sendNotificationByExt,
   getExtensionDetails,
   sendMissedPTTNotification,
-  incomingPTTNotification
+  incomingPTTNotification,
 } = require("../services/notification");
 var clientObj, holdingBridge;
-console.log("loaded");
 
 // following details you can find from /etc/asterisk/ari.conf and /etc/asterisk/http.conf
-ari.connect("http://localhost:8088", "asterisk", "asterisk", clientLoaded);
+try{
+  ari.connect("http://localhost:8088", "asterisk", "asterisk", clientLoaded);
+}catch(err){
+  console.log('throwed error::',err);
+}
 
 // handler for client being loaded
 function clientLoaded(err, client) {
@@ -64,7 +67,7 @@ function clientLoaded(err, client) {
     const caller = await getExtensionDetails(channel.caller.number);
     const callee = await getExtensionDetails(channel.dialplan.exten);
     console.log(`dial to :::${callee.first_name} ${callee.last_name}`);
-    incomingPTTNotification(callee.extension,caller);
+    // incomingPTTNotification(callee.extension, caller);
     dialed.originate(
       {
         endpoint: `PJSIP/${channel.dialplan.exten}`,
@@ -89,11 +92,16 @@ function clientLoaded(err, client) {
                   timeout: 20,
                 },
                 function (err, dialedObj) {
-                  if(err){
-                    sendMissedPTTNotification(channel.dialplan.exten,caller);
-                    console.log(
-                      `${callee.first_name} ${callee.last_name} seems to be offline`
-                    );
+                  if (err) {
+                    if (JSON.parse(err.message).error == "Allocation failed") {
+                      "sending missed PTT message"
+                      sendMissedPTTNotification(channel.dialplan.exten, caller);
+                      console.log(
+                        `${callee.first_name} ${callee.last_name} seems to be offline`
+                      );
+                    }else{
+                      console.log("err",err);
+                    }
                   }
                 }
               );
@@ -121,6 +129,9 @@ function clientLoaded(err, client) {
       channel.name
     ); // hangup the other end
     channel.hangup(function (err) {
+      if(err){
+        console.log('hangupOriginal err');
+      }
       // ignore error since original channel could have hung up, causing the
       // dialed channel to exit Stasis
     });
@@ -132,6 +143,7 @@ function clientLoaded(err, client) {
     });
     dialed.answer(function (err) {
       if (err) {
+        console.log(err);
         throw err;
       }
     });
