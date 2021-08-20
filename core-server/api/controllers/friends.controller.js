@@ -37,16 +37,18 @@ const getAllRecents = async (req, res, next) => {
     const list = await CDR.find({ disposition: "ANSWERED" })
       .or([{ src: req.user.extension }, { dst: req.user.extension }])
       .sort({ start: -1 })
+      .limit(30)
       .lean();
     for (const user of list) {
-      const srcObj = await Users.findOne({ extension: user.src });
-      const dstObj = await Users.findOne({ extension: user.dst });
-      user.srcDisplay = `${srcObj["first_name"]} ${srcObj["last_name"]}`;
-      user.srcImage = srcObj["profile"];
-      user.dstDisplay = `${dstObj["first_name"]} ${dstObj["last_name"]}`;
-      user.dstImage = dstObj["profile"];
+      const responses = await Promise.all([
+        Users.findOne({ extension: user.src }),
+        Users.findOne({ extension: user.dst }),
+      ]);
+      user.srcDisplay = `${responses[0]["first_name"]} ${responses[0]["last_name"]}`;
+      user.srcImage = responses[0]["profile"];
+      user.dstDisplay = `${responses[1]["first_name"]} ${responses[1]["last_name"]}`;
+      user.dstImage = responses[1]["profile"];
     }
-    console.log("response sent");
     res.status(200).json({
       message: "Recent list",
       data: list,

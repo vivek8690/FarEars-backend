@@ -18,7 +18,8 @@ const inviteUser = async (req, res, next) => {
         // send push notification to user
         const message = {
           notification: {
-            title: `${req.user.first_name} ${req.user.last_name} has sent you request`,
+            title: `Friend request`,
+            body: `${req.user.first_name} ${req.user.last_name} has sent you request`
           },
           data: {
             type: "invite",
@@ -69,7 +70,8 @@ const manageInvite = async (req, res, next) => {
       );
       const message = {
         notification: {
-          title: `${req.user.first_name} ${req.user.last_name} has accepted your request`,
+          title: `Friend request`,
+          body: `${req.user.first_name} ${req.user.last_name} has accepted your request`,
         },
         data: {
           type: "user_list",

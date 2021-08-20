@@ -4,8 +4,7 @@ var ari = require("ari-client");
 const {
   sendNotificationByExt,
   getExtensionDetails,
-  sendMissedPTTNotification,
-  incomingPTTNotification,
+  sendMissedPTTNotification
 } = require("../services/notification");
 var clientObj, holdingBridge;
 
@@ -19,7 +18,7 @@ try{
 // handler for client being loaded
 function clientLoaded(err, client) {
   if (err) {
-    throw err;
+    console.log('err in client loading', err);
   } // handler for StasisStart event
   function stasisStart(event, channel) {
     // ensure the channel is not a dialed channel
@@ -27,7 +26,7 @@ function clientLoaded(err, client) {
     if (!dialed) {
       channel.answer(function (err) {
         if (err) {
-          throw err;
+          console.log('dialed err', err);
         }
         console.log("Channel %s has entered our application", channel.name);
         // client.recordings
@@ -67,7 +66,6 @@ function clientLoaded(err, client) {
     const caller = await getExtensionDetails(channel.caller.number);
     const callee = await getExtensionDetails(channel.dialplan.exten);
     console.log(`dial to :::${callee.first_name} ${callee.last_name}`);
-    // incomingPTTNotification(callee.extension, caller);
     dialed.originate(
       {
         endpoint: `PJSIP/${channel.dialplan.exten}`,
@@ -77,10 +75,12 @@ function clientLoaded(err, client) {
         context: "testing",
         timeout: 20,
       },
-      function (err, dialedObj) {
+      async function (err, dialedObj) {
+        console.log(dialedObj);
         if (err) {
+          console.log(err);
           if (JSON.parse(err.message).error == "Allocation failed") {
-            sendNotificationByExt(channel.dialplan.exten);
+            await sendNotificationByExt(channel.dialplan.exten,5);
             setTimeout(() => {
               dialed.originate(
                 {
@@ -91,11 +91,12 @@ function clientLoaded(err, client) {
                   context: "testing",
                   timeout: 20,
                 },
-                function (err, dialedObj) {
+                async function (err, dialedObj) {
+                  console.log(err);
                   if (err) {
                     if (JSON.parse(err.message).error == "Allocation failed") {
                       "sending missed PTT message"
-                      sendMissedPTTNotification(channel.dialplan.exten, caller);
+                      await sendMissedPTTNotification(channel.dialplan.exten, caller);
                       console.log(
                         `${callee.first_name} ${callee.last_name} seems to be offline`
                       );
@@ -105,7 +106,7 @@ function clientLoaded(err, client) {
                   }
                 }
               );
-            }, 2000);
+            }, 5000);
           }
         }
       }
@@ -143,13 +144,12 @@ function clientLoaded(err, client) {
     });
     dialed.answer(function (err) {
       if (err) {
-        console.log(err);
-        throw err;
+        console.log('dialed answer', err);
       }
     });
     bridge.create({ type: "mixing" }, function (err, bridge) {
       if (err) {
-        throw err;
+        console.log('bridge create', err);
       }
 
       console.log("Created bridge %s", bridge.id);
@@ -165,6 +165,7 @@ function clientLoaded(err, client) {
     );
     bridge.destroy(function (err) {
       if (err) {
+        console.log('bridge destroy', err);
         throw err;
       }
     });
@@ -178,7 +179,7 @@ function clientLoaded(err, client) {
     );
     bridge.addChannel({ channel: [channel.id, dialed.id] }, function (err) {
       if (err) {
-        throw err;
+        console.log('bridge add channel', err);
       }
     });
   }

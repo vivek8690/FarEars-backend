@@ -17,11 +17,9 @@ const sendNotification = async (req, res, next) => {
 
 const sendNotificationByExt = async (req, res, next) => {
   try {
-    const { extension, expiry } = req.body;
+    const { extension, expiry, message } = req.body;
     const user = await Users.findOne({ extension });
     const registrationToken = user.deviceToken;
-    console.log(user);
-    const message = req.body.message;
     await sendPushNotification(registrationToken, message, expiry);
     return res.status(200).json({ message: "Notification sent successfully" });
   } catch (err) {

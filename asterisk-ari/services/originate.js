@@ -61,7 +61,6 @@ const inviteToBridge = async function (inviteTo, inviteIn, fromUser) {
     );
   } catch (err) {
     console.log(err);
-    throw err;
   }
 
   async function dtmfReceived(event, channel) {
@@ -90,7 +89,7 @@ const inviteToBridge = async function (inviteTo, inviteIn, fromUser) {
 
       dialed.answer(function (err) {
         if (err) {
-          throw err;
+          console.log('dialed', err);
         }
       });
       console.log("dialed", dialed.name);

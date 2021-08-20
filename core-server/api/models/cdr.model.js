@@ -32,6 +32,8 @@ const CDRSchema = new mongoose.Schema(
   { strict: false }
 );
 
+
+CDRSchema.index({ start: -1 });
 /**
  * @model Users
  */
