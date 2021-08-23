@@ -4,21 +4,22 @@ var ari = require("ari-client");
 const {
   sendNotificationByExt,
   getExtensionDetails,
-  sendMissedPTTNotification
+  sendMissedPTTNotification,
+  createRecording,
 } = require("../services/notification");
 var clientObj, holdingBridge;
 
 // following details you can find from /etc/asterisk/ari.conf and /etc/asterisk/http.conf
-try{
+try {
   ari.connect("http://localhost:8088", "asterisk", "asterisk", clientLoaded);
-}catch(err){
-  console.log('throwed error::',err);
+} catch (err) {
+  console.log("throwed error::", err);
 }
 
 // handler for client being loaded
 function clientLoaded(err, client) {
   if (err) {
-    console.log('err in client loading', err);
+    console.log("err in client loading", err);
   } // handler for StasisStart event
   function stasisStart(event, channel) {
     // ensure the channel is not a dialed channel
@@ -26,7 +27,7 @@ function clientLoaded(err, client) {
     if (!dialed) {
       channel.answer(function (err) {
         if (err) {
-          console.log('dialed err', err);
+          console.log("dialed err", err);
         }
         console.log("Channel %s has entered our application", channel.name);
         // client.recordings
@@ -51,7 +52,6 @@ function clientLoaded(err, client) {
     }
   }
   async function originate(channel) {
-    console.log(channel.dialplan);
     var dialed = client.Channel();
     channel.on("StasisEnd", function (event, channel) {
       hangupDialed(channel, dialed);
@@ -76,11 +76,10 @@ function clientLoaded(err, client) {
         timeout: 20,
       },
       async function (err, dialedObj) {
-        console.log(dialedObj);
         if (err) {
           console.log(err);
           if (JSON.parse(err.message).error == "Allocation failed") {
-            await sendNotificationByExt(channel.dialplan.exten,5);
+            await sendNotificationByExt(channel.dialplan.exten, 5);
             setTimeout(() => {
               dialed.originate(
                 {
@@ -95,13 +94,16 @@ function clientLoaded(err, client) {
                   console.log(err);
                   if (err) {
                     if (JSON.parse(err.message).error == "Allocation failed") {
-                      "sending missed PTT message"
-                      await sendMissedPTTNotification(channel.dialplan.exten, caller);
+                      ("sending missed PTT message");
+                      await sendMissedPTTNotification(
+                        channel.dialplan.exten,
+                        caller
+                      );
                       console.log(
                         `${callee.first_name} ${callee.last_name} seems to be offline`
                       );
-                    }else{
-                      console.log("err",err);
+                    } else {
+                      console.log("err", err);
                     }
                   }
                 }
@@ -130,8 +132,8 @@ function clientLoaded(err, client) {
       channel.name
     ); // hangup the other end
     channel.hangup(function (err) {
-      if(err){
-        console.log('hangupOriginal err');
+      if (err) {
+        console.log("hangupOriginal err");
       }
       // ignore error since original channel could have hung up, causing the
       // dialed channel to exit Stasis
@@ -144,17 +146,17 @@ function clientLoaded(err, client) {
     });
     dialed.answer(function (err) {
       if (err) {
-        console.log('dialed answer', err);
+        console.log("dialed answer", err);
       }
     });
     bridge.create({ type: "mixing" }, function (err, bridge) {
       if (err) {
-        console.log('bridge create', err);
+        console.log("bridge create", err);
       }
 
       console.log("Created bridge %s", bridge.id);
       addChannelsToBridge(channel, dialed, bridge);
-      recordBridge(bridge);
+      recordBridge(bridge, channel);
     });
   } // handler for the dialed channel leaving Stasis
   function dialedExit(dialed, bridge) {
@@ -165,7 +167,7 @@ function clientLoaded(err, client) {
     );
     bridge.destroy(function (err) {
       if (err) {
-        console.log('bridge destroy', err);
+        console.log("bridge destroy", err);
         throw err;
       }
     });
@@ -179,14 +181,19 @@ function clientLoaded(err, client) {
     );
     bridge.addChannel({ channel: [channel.id, dialed.id] }, function (err) {
       if (err) {
-        console.log('bridge add channel', err);
+        console.log("bridge add channel", err);
       }
     });
   }
-  function recordBridge(bridge) {
+  function recordBridge(bridge, channel) {
     bridge.record(
       { bridgeId: bridge.id, format: "wav", name: bridge.id },
       function (err, liverecording) {
+        createRecording(
+          channel.caller.number,
+          channel.dialplan.exten,
+          bridge.id
+        );
         // console.log("liverecording", liverecording);
         if (err) {
           console.log(err);

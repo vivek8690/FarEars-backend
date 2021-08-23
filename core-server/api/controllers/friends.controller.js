@@ -1,5 +1,5 @@
 const ObjectId = require("mongoose").Types.ObjectId;
-const { Invitation, Users, CDR } = require("../models");
+const { Invitation, Users, CDR, Recording } = require("../models");
 const APIError = require("../utils/APIError");
 const { getAllFriendsList } = require("../services/friends.service");
 
@@ -59,4 +59,48 @@ const getAllRecents = async (req, res, next) => {
   }
 };
 
-module.exports = { getAllFriends, validateFriends, getAllRecents };
+const createRecording = async (req, res, next) => {
+  try {
+    const { toUser, fromUser, s3Filename } = req.body;
+    const recording = await Recording.create({
+      toUser,
+      fromUser,
+      s3URL: `https://recordings-far-ears.s3.ap-south-1.amazonaws.com/${s3Filename}.wav`,
+    });
+    res.status(200).json({
+      message: "Recording created",
+      data: recording,
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+const getAllRecordings = async (req, res, next) => {
+  try {
+    const recordings = await Recording.find()
+      .or([
+        { fromUser: req.user.extension },
+        { toUser: req.user.extension },
+        { fromUser: req.query.ofExtension },
+        { toUser: req.user.ofExtension },
+      ])
+      .sort({ createdAt: -1 });
+    res.status(200).json({
+      message: "Recordings list",
+      data: recordings,
+    });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+};
+
+module.exports = {
+  getAllFriends,
+  validateFriends,
+  getAllRecents,
+  getAllRecordings,
+  createRecording,
+};

@@ -5,6 +5,20 @@ const axiosNoFail = axios.create({
   },
 });
 
+
+const createRecording = async (toUser, fromUser, s3Filename) => {
+  try {
+    const body = {
+      toUser,
+      fromUser,
+      s3Filename
+    };
+    await axios.post("http://localhost:3000/api/friends/recordings", body);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
 const sendPushNotification = async (toUser, fromUser) => {
   try {
     console.log(`${fromUser.first_name} ${fromUser.last_name} sending you PTT`);
@@ -82,4 +96,5 @@ module.exports = {
   sendNotificationByExt,
   getExtensionDetails,
   sendMissedPTTNotification,
+  createRecording
 };

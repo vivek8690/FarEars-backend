@@ -8,6 +8,7 @@ const Groups = require("./groups.model");
 const Invitation = require("./invitation.model");
 const Friends = require("./friends.model");
 const CDR = require("./cdr.model");
+const Recording = require("./recording.model");
 
 module.exports = {
   PSAors,
@@ -19,5 +20,6 @@ module.exports = {
   Groups,
   Invitation,
   Friends,
-  CDR
+  CDR,
+  Recording
 };

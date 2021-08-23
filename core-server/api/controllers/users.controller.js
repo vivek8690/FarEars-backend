@@ -100,9 +100,11 @@ const verifyAccount = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const { email, password, deviceToken } = req.body;
+  let { email, password, deviceToken } = req.body;
+  email = email.trim();
+  password = password.trim();
   const filterUser = {
-    email,
+    email
   };
   try {
     let user = await Users.findOne(filterUser);
@@ -199,7 +201,7 @@ const forgotPasswordVerify = async (req, res, next) => {
       }
 
     }
-    
+
     return res.status(httpStatus.OK).send({
       message: "Now you can login with new password.",
       data: {email},
