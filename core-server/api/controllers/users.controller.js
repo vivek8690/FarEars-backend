@@ -104,7 +104,7 @@ const login = async (req, res, next) => {
   email = email.trim();
   password = password.trim();
   const filterUser = {
-    email
+    email,
   };
   try {
     let user = await Users.findOne(filterUser);
@@ -149,24 +149,23 @@ const login = async (req, res, next) => {
   }
 };
 
-
 const forgotPasswordOTP = async (req, res, next) => {
-  try{
+  try {
     let { email } = req.body;
-    console.log("email",email)
+    console.log("email", email);
     await sendOTPEmail(email);
     return res.status(httpStatus.OK).send({
       message: "Otp sent to registered email address.",
-      data: {email},
+      data: { email },
       success: true,
     });
-  }catch(e){
-    next(e)
+  } catch (e) {
+    next(e);
   }
-}
+};
 
 const forgotPasswordVerify = async (req, res, next) => {
-  try{
+  try {
     let { otp, newPassword, email } = req.body;
     let otpData = await OTPModel.findOne({
       email,
@@ -178,39 +177,38 @@ const forgotPasswordVerify = async (req, res, next) => {
         status: 400,
       });
     }
-    let user = await Users.findOne({email});
+    let user = await Users.findOne({ email });
     if (otpData && otpData.email == email) {
       let comparable = `${otp}${email}`;
       let isSuccess = await bcrypt.compare(comparable, otpData.otp);
-      if(!isSuccess){
+      if (!isSuccess) {
         throw new APIError({
           message: "OTP Does not match or Does not exists",
           errCode: "invalid_otp",
           status: 400,
         });
       }
-      if(isSuccess && user){
+      if (isSuccess && user) {
         let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
         let hashedPassword = await bcrypt.hash(newPassword, salt);
-        user.password = hashedPassword
+        user.password = hashedPassword;
         await createAsteriskPassword(newPassword, user.extension);
         await OTPModel.deleteOne({
           email,
         });
-        await user.save()
+        await user.save();
       }
-
     }
 
     return res.status(httpStatus.OK).send({
       message: "Now you can login with new password.",
-      data: {email},
+      data: { email },
       success: true,
     });
-  }catch(e){
-    next(e)
+  } catch (e) {
+    next(e);
   }
-}
+};
 
 const registerUser = async (req, res, next) => {
   const { email, password, first_name, last_name } = req.body;
@@ -371,5 +369,5 @@ module.exports = {
   updateUserById,
   changePassword,
   forgotPasswordOTP,
-  forgotPasswordVerify
+  forgotPasswordVerify,
 };

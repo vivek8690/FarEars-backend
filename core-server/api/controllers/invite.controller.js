@@ -19,7 +19,7 @@ const inviteUser = async (req, res, next) => {
         const message = {
           notification: {
             title: `Friend request`,
-            body: `${req.user.first_name} ${req.user.last_name} has sent you request`
+            body: `${req.user.first_name} ${req.user.last_name} has sent you request`,
           },
           data: {
             type: "invite",
@@ -61,7 +61,7 @@ const manageInvite = async (req, res, next) => {
       { _id: invitationId, toUser: _id },
       { status },
       { new: true }
-    ).populate('fromUser');
+    ).populate("fromUser");
     if (status === "accepted") {
       await Friends.findOneAndUpdate(
         { user: _id },
@@ -116,4 +116,9 @@ const deleteAllInvitations = async (req, res, next) => {
   }
 };
 
-module.exports = { inviteUser, manageInvite, getAllInvitations, deleteAllInvitations };
+module.exports = {
+  inviteUser,
+  manageInvite,
+  getAllInvitations,
+  deleteAllInvitations,
+};

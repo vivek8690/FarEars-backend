@@ -7,7 +7,6 @@ const { s3bucket } = require("../services/s3.service");
 
 const { PSAors, PSAuth, PSEndpoint, OTPModel, Users } = require("../models");
 
-
 const uploadExtensions = async (req, res, next) => {
   try {
     if (req.file == undefined) {
@@ -27,38 +26,38 @@ const uploadExtensions = async (req, res, next) => {
         const session = await mongoose.startSession();
         await session.startTransaction();
         // try {
-          let auths = [],
-            endpoint = [],
-            aors = [];
-          auths = users.map((el) => {
-            // console.log(el.extension);
-            let plainText = el.extension + ":" + "asterisk" + ":" + el.extension;
-            var md5Hash = crypto
-              .createHash("md5")
-              .update(plainText)
-              .digest("hex");
-            return {
-              username: el.extension,
-              md5_cred: md5Hash,
-              _id: el.extension,
-            };
-          });
-          aors = users.map((el) => {
-            return {
-              _id: el.extension,
-            };
-          });
-          endpoints = users.map((el) => {
-            return {
-              aors: el.extension,
-              _id: el.extension,
-              auth: el.extension,
-            };
-          });
+        let auths = [],
+          endpoint = [],
+          aors = [];
+        auths = users.map((el) => {
+          // console.log(el.extension);
+          let plainText = el.extension + ":" + "asterisk" + ":" + el.extension;
+          var md5Hash = crypto
+            .createHash("md5")
+            .update(plainText)
+            .digest("hex");
+          return {
+            username: el.extension,
+            md5_cred: md5Hash,
+            _id: el.extension,
+          };
+        });
+        aors = users.map((el) => {
+          return {
+            _id: el.extension,
+          };
+        });
+        endpoints = users.map((el) => {
+          return {
+            aors: el.extension,
+            _id: el.extension,
+            auth: el.extension,
+          };
+        });
 
-          await PSAuth.insertMany(auths);
-          await PSAors.insertMany(aors);
-          await PSEndpoint.insertMany(endpoints);
+        await PSAuth.insertMany(auths);
+        await PSAors.insertMany(aors);
+        await PSEndpoint.insertMany(endpoints);
         //   const fileContent = await fs.readFileSync(path);
         //   const s3Params = {
         //     Bucket: process.env.AWS_S3_BUCKET,
@@ -99,9 +98,9 @@ const uploadExtensions = async (req, res, next) => {
         //   next(err, req, res);
         // }
         return res.status(httpStatus.CREATED).send({
-                success: true,
-                message: "Data uploaded Successfully",
-              });
+          success: true,
+          message: "Data uploaded Successfully",
+        });
       });
   } catch (error) {
     next(error, req, res);
