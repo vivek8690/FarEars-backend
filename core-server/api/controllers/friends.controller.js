@@ -81,12 +81,11 @@ const getAllRecordings = async (req, res, next) => {
   try {
     const recordings = await Recording.find()
       .or([
-        { fromUser: req.user.extension },
-        { toUser: req.user.extension },
-        { fromUser: req.query.ofExtension },
-        { toUser: req.user.ofExtension },
+        { fromUser: req.user.extension, toUser: req.query.ofExtension },
+        { fromUser: req.query.ofExtension, toUser: req.user.extension },
       ])
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     res.status(200).json({
       message: "Recordings list",
       data: recordings,

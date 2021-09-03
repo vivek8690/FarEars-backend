@@ -6,6 +6,7 @@ const userRoute = require("../v1/users.routes");
 const inviteRoute = require("../v1/invite.routes");
 const friendRoute = require("../v1/friends.routes");
 const notificationRoute = require("../v1/notification.routes");
+const forceUpdateVersion = '1.0.0';
 
 const { emailServiceStatus, mongoDBStatus } = require("../../services");
 
@@ -17,6 +18,12 @@ router.get("/status", async (req, res) => {
     mongo: mongoDBStatusMessage,
     mailService: mailServerStatus,
   });
+});
+
+router.get("/version", async (req, res) => {
+  return res
+    .status(200)
+    .json({ message: "Force update version", version: forceUpdateVersion });
 });
 
 router.use("/users", userRoute);

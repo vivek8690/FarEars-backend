@@ -41,6 +41,8 @@ const sendVerificationEmail = async (req, res, next) => {
 const verifyAccount = async (req, res, next) => {
   try {
     let { otp, email } = req.body;
+    email = email.trim();
+    otp = otp.trim();
     let user = await Users.findOne({
       email,
     });
@@ -211,7 +213,11 @@ const forgotPasswordVerify = async (req, res, next) => {
 };
 
 const registerUser = async (req, res, next) => {
-  const { email, password, first_name, last_name } = req.body;
+  let { email, password, first_name, last_name } = req.body;
+  email = email.trim();
+  password = password.trim();
+  first_name = first_name.trim();
+  last_name = last_name.trim();
   try {
     let user = await Users.findOne({
       email,

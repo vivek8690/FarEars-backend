@@ -25,29 +25,22 @@ function clientLoaded(err, client) {
     // ensure the channel is not a dialed channel
     var dialed = event.args[0] === "dialed";
     if (!dialed) {
-      channel.answer(function (err) {
-        if (err) {
-          console.log("dialed err", err);
+      client.channels.list(function (err, channels) {
+        const isThere = channels.find((channelObj) =>
+          channelObj.name.includes(channel.dialplan.exten)
+        );
+        if (isThere) {
+          console.log("Seems busy", isThere.name);
+          channel.hangup({ reason: "busy" }, function (err, resp) {});
+        } else {
+          channel.answer(function (err) {
+            if (err) {
+              console.log("dialed err", err);
+            }
+            console.log("Channel %s has entered our application", channel.name);
+            originate(channel);
+          });
         }
-        console.log("Channel %s has entered our application", channel.name);
-        // client.recordings
-        //   .listStored()
-        //   .then(function (storedrecordings) {
-        //     // console.log("storedrecordings",storedrecordings.map(x => x.name));
-        //   })
-        //   .catch(function (err) {});
-
-        // var playback = client.Playback();
-        // channel.play(
-        //   { media: "sound:pls-wait-connect-call" },
-        //   playback,
-        //   function (err, playback) {
-        //     if (err) {
-        //       throw err;
-        //     }
-        //   }
-        // );
-        originate(channel);
       });
     }
   }
@@ -59,13 +52,19 @@ function clientLoaded(err, client) {
     dialed.on("ChannelDestroyed", function (event, dialed) {
       hangupOriginal(channel, dialed);
     });
+    dialed.on("ChannelStateChange", function (event, channel) {
+      console.log("Channel %s is now: %s", channel.name, channel.state);
+    });
     dialed.on("StasisStart", function (event, dialed) {
       joinMixingBridge(channel, dialed);
       dialed.mute({ direction: "in" });
     });
     const caller = await getExtensionDetails(channel.caller.number);
     const callee = await getExtensionDetails(channel.dialplan.exten);
-    console.log(`dial to :::${callee.first_name} ${callee.last_name}`);
+    console.log(
+      `*********${caller.first_name} ${caller.last_name}(${caller.extension}) => ${callee.first_name} ${callee.last_name}(${callee.extension})`
+    );
+    // console.log("dialed", dialed);
     dialed.originate(
       {
         endpoint: `PJSIP/${channel.dialplan.exten}`,
@@ -73,11 +72,10 @@ function clientLoaded(err, client) {
         appArgs: "dialed",
         callerId: `${caller.first_name} ${caller.last_name}@${caller.extension}@${caller.profile}`,
         context: "testing",
-        timeout: 20,
+        timeout: 10,
       },
       async function (err, dialedObj) {
         if (err) {
-          console.log(err);
           if (JSON.parse(err.message).error == "Allocation failed") {
             await sendNotificationByExt(channel.dialplan.exten, 5);
             setTimeout(() => {
@@ -91,7 +89,6 @@ function clientLoaded(err, client) {
                   timeout: 20,
                 },
                 async function (err, dialedObj) {
-                  console.log(err);
                   if (err) {
                     if (JSON.parse(err.message).error == "Allocation failed") {
                       ("sending missed PTT message");
@@ -99,8 +96,11 @@ function clientLoaded(err, client) {
                         channel.dialplan.exten,
                         caller
                       );
+                      channel.hangup({ reason: "congestion" }, function (err, resp) {
+                        console.log("hangup err",err);
+                      });
                       console.log(
-                        `${callee.first_name} ${callee.last_name} seems to be offline`
+                        `${callee.first_name} ${callee.last_name}(${callee.extension}) seems to be offline`
                       );
                     } else {
                       console.log("err", err);

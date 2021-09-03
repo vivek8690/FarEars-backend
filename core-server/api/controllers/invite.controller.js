@@ -5,6 +5,7 @@ const { sendPushNotification } = require("../services/notification.service");
 const inviteUser = async (req, res, next) => {
   try {
     let { email } = req.body;
+    email = email.trim();
     let { first_name, last_name } = req.user;
     let userExist = await Users.findOne({ email });
     if (userExist && userExist.is_verified) {
