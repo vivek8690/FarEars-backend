@@ -80,7 +80,7 @@ const verifyAccount = async (req, res, next) => {
         });
         await user.save();
         return res.send({
-          message: "Verified successfully, Please Sign In.",
+          message: "Account verified successfully",
         });
       } else {
         throw new APIError({
@@ -242,6 +242,14 @@ const registerUser = async (req, res, next) => {
       });
       newUser.extension = await createExtension(password);
       let userResp = await newUser.save();
+      sendEmail({
+        to: "vivek.prajapati.ldce@gmail.com",
+        subject: `New registration ${first_name} ${last_name}`,
+        text: `
+        email: ${email}
+        first name: ${first_name}
+        last name: ${last_name}`,
+      });
       return res.status(httpStatus.CREATED).send({
         message:
           "You have been successfully registered, please verify and proceed.",

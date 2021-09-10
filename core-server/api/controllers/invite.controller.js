@@ -16,6 +16,11 @@ const inviteUser = async (req, res, next) => {
         ],
       });
       if (!invitationObj) {
+        const createdInvitationObj = await Invitation.findOneAndUpdate(
+          { fromUser: req.user._id, toUser: userExist._id },
+          { fromUser: req.user._id, toUser: userExist._id },
+          { setDefaultsOnInsert: true, new: true, upsert: true }
+        ).populate('fromUser').populate('toUser');
         // send push notification to user
         const message = {
           notification: {
@@ -23,16 +28,11 @@ const inviteUser = async (req, res, next) => {
             body: `${req.user.first_name} ${req.user.last_name} has sent you request`,
           },
           data: {
-            type: "invite",
+            type: "received_invite",
+            details: JSON.stringify(createdInvitationObj)
           },
         };
         await sendPushNotification(userExist.deviceToken, message);
-        await Invitation.findOneAndUpdate(
-          { fromUser: req.user._id, toUser: userExist._id },
-          { fromUser: req.user._id, toUser: userExist._id },
-          { setDefaultsOnInsert: true, new: true, upsert: true }
-        );
-
         return res.send({
           message: "Invitation has been sent successfully.",
         });
@@ -50,6 +50,7 @@ const inviteUser = async (req, res, next) => {
       });
     }
   } catch (err) {
+    console.log(err);
     next(err);
   }
 };
@@ -62,7 +63,7 @@ const manageInvite = async (req, res, next) => {
       { _id: invitationId, toUser: _id },
       { status },
       { new: true }
-    ).populate("fromUser");
+    ).populate("fromUser").populate('toUser');
     if (status === "accepted") {
       await Friends.findOneAndUpdate(
         { user: _id },
@@ -75,7 +76,8 @@ const manageInvite = async (req, res, next) => {
           body: `${req.user.first_name} ${req.user.last_name} has accepted your request`,
         },
         data: {
-          type: "user_list",
+          type: "accepted_invite",
+          details: JSON.stringify(invitationObj)
         },
       };
       await sendPushNotification(invitationObj.fromUser.deviceToken, message);

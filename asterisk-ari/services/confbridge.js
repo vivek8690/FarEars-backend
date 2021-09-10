@@ -77,38 +77,44 @@ function clientLoaded(err, client) {
       async function (err, dialedObj) {
         if (err) {
           if (JSON.parse(err.message).error == "Allocation failed") {
-            await sendNotificationByExt(channel.dialplan.exten, 5);
-            setTimeout(() => {
-              dialed.originate(
-                {
-                  endpoint: `PJSIP/${channel.dialplan.exten}`,
-                  app: "ari-test",
-                  appArgs: "dialed",
-                  callerId: `${caller.first_name} ${caller.last_name}@${caller.extension}@${caller.profile}`,
-                  context: "testing",
-                  timeout: 20,
-                },
-                async function (err, dialedObj) {
-                  if (err) {
-                    if (JSON.parse(err.message).error == "Allocation failed") {
-                      ("sending missed PTT message");
-                      await sendMissedPTTNotification(
-                        channel.dialplan.exten,
-                        caller
-                      );
-                      channel.hangup({ reason: "congestion" }, function (err, resp) {
-                        console.log("hangup err",err);
-                      });
-                      console.log(
-                        `${callee.first_name} ${callee.last_name}(${callee.extension}) seems to be offline`
-                      );
-                    } else {
-                      console.log("err", err);
-                    }
-                  }
-                }
-              );
-            }, 5000);
+            await sendMissedPTTNotification(channel.dialplan.exten, caller);
+            channel.hangup({ reason: "congestion" }, function (err, resp) {
+              console.log("hangup err", err);
+            });
+            console.log(
+              `${callee.first_name} ${callee.last_name}(${callee.extension}) seems to be offline`
+            );
+            // setTimeout(() => {
+            //   dialed.originate(
+            //     {
+            //       endpoint: `PJSIP/${channel.dialplan.exten}`,
+            //       app: "ari-test",
+            //       appArgs: "dialed",
+            //       callerId: `${caller.first_name} ${caller.last_name}@${caller.extension}@${caller.profile}`,
+            //       context: "testing",
+            //       timeout: 20,
+            //     },
+            //     async function (err, dialedObj) {
+            //       if (err) {
+            //         if (JSON.parse(err.message).error == "Allocation failed") {
+            //           ("sending missed PTT message");
+            //           await sendMissedPTTNotification(
+            //             channel.dialplan.exten,
+            //             caller
+            //           );
+            //           channel.hangup({ reason: "congestion" }, function (err, resp) {
+            //             console.log("hangup err",err);
+            //           });
+            //           console.log(
+            //             `${callee.first_name} ${callee.last_name}(${callee.extension}) seems to be offline`
+            //           );
+            //         } else {
+            //           console.log("err", err);
+            //         }
+            //       }
+            //     }
+            //   );
+            // }, 5000);
           }
         }
       }

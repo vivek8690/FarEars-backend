@@ -21,7 +21,7 @@ const imageUpload = async (base64, userId) => {
   // This won't be needed if they're uploading their avatar, hence the filename, userAvatar.js.
   const params = {
     Bucket: process.env.AWS_S3_BUCKET_NAME,
-    Key: `${userId}.${type.ext}`, // type is not required
+    Key: `${userId}_${Date.now()}.${type.ext}`, // type is not required
     Body: base64Data,
     ACL: 'public-read',
     ContentEncoding: 'base64', // required
