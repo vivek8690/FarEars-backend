@@ -357,16 +357,18 @@ const fetchUserByExtension = async (req, res, next) => {
 const updateUserById = async (req, res, next) => {
   try {
     const { first_name, last_name } = req.body;
-    let user = await Users.findOneAndUpdate(
-      { _id: req.user._id },
-      { first_name, last_name },
-      { new: true }
+    let user = await Users.findOne(
+      { _id: req.user._id }
     );
+    user.first_name = first_name;
+    user.last_name = last_name;
+    await user.save();
     return res.send({
       message: "User updated Successfully.",
       data: user,
     });
   } catch (err) {
+    console.log(err);
     next(err);
   }
 };

@@ -18,7 +18,6 @@ const createExtension = async function (password) {
     }
     const plainText = extension + ":" + "asterisk" + ":" + password;
     const md5Hash = crypto.createHash("md5").update(plainText).digest("hex");
-    console.log("md5Hash", md5Hash);
     await session.startTransaction();
     const auth = new PSAuth({
       username: extension,
@@ -48,7 +47,6 @@ const createExtension = async function (password) {
 const createAsteriskPassword = async (password, extension) => {
   const plainText = extension + ":" + "asterisk" + ":" + password;
   const md5Hash = crypto.createHash("md5").update(plainText).digest("hex");
-  console.log("md5Hash", md5Hash);
   const psAuth = await PSAuth.findOne({_id: extension});
   psAuth.md5_cred = md5Hash;
   return psAuth.save();

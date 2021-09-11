@@ -16,9 +16,9 @@ module.exports = {
   PSEndpoint,
   Identify,
   OTPModel,
+  Invitation,
   Users,
   Groups,
-  Invitation,
   Friends,
   CDR,
   Recording

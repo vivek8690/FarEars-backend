@@ -51,7 +51,6 @@ exports.uploadFromURL = async (name) => {
         err == null ? resolve(data) : reject(err)
       );
     });
-    console.log(response.Location);
     return response.Location;
   } catch (error) {
     console.log("Error while uploading file to s3bucket:", error, error.stack);

@@ -21,6 +21,7 @@ const getAllFriendsList = async (userObj) => {
     });
     return unique;
   } catch (err) {
+    console.log(err);
     throw err;
   }
 };
