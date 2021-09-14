@@ -1,10 +1,11 @@
 const randomize = require("randomatic");
 
 const { BCRYPT_SALT } = process.env;
-const { OTPModel } = require("../models");
+const { OTPModel,Users } = require("../models");
 const bcrypt = require("bcrypt");
 const { sendEmail } = require("./");
 const { getAllFriendsList } = require("./friends.service");
+const { createExtension } = require("./asterisk");
 const { sendPushNotification } = require("./notification.service");
 
 const sendOTPEmail = async (email) => {
@@ -46,13 +47,41 @@ const sendOTPEmail = async (email) => {
 const broadcastUpdate = async (user) => {
   const friendsList = await getAllFriendsList(user);
   const registrationTokens = friendsList.map((user) => user.deviceToken);
-  const message = {
-    data: {
-      type: "user_updated",
-      details: JSON.stringify(user),
-    },
-  };
-  sendPushNotification(registrationTokens, message, 20);
+  if (registrationTokens.length > 0) {
+    const message = {
+      data: {
+        type: "user_updated",
+        details: JSON.stringify(user),
+      },
+    };
+    sendPushNotification(registrationTokens, message, 20);
+  }
 };
 
-module.exports = { sendOTPEmail, broadcastUpdate };
+const saveUserDetails = async (user) => {
+  try {
+    let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
+    let hashedPassword = await bcrypt.hash(user.password, salt);
+    let newUser = new Users({
+      ...user,
+      is_verified: user.loginWith === 'google' ? true: false,
+      password: hashedPassword,
+    });
+    
+    newUser.extension = await createExtension(user.password);
+    let userResp = await newUser.save();
+    sendEmail({
+      to: "vivek.prajapati.ldce@gmail.com",
+      subject: `New registration ${newUser.first_name} ${newUser.last_name}`,
+      text: `
+      email: ${newUser.email}
+      first name: ${newUser.first_name}
+      last name: ${newUser.last_name}`,
+    });
+    return userResp;
+  } catch (err) {
+    throw err;
+  }
+};
+
+module.exports = { sendOTPEmail, broadcastUpdate, saveUserDetails };

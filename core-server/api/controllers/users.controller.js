@@ -1,9 +1,12 @@
-const { BCRYPT_SALT } = process.env;
+const { BCRYPT_SALT, CLIENT_ID } = process.env;
 
 const httpStatus = require("http-status");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const randomize = require("randomatic");
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(CLIENT_ID);
+
 const APIError = require("../utils/APIError");
 const {
   createExtension,
@@ -12,7 +15,7 @@ const {
 const { OTPModel, Users, Invitation, Friends, Groups } = require("../models");
 
 const { sendEmail } = require("../services");
-const { sendOTPEmail } = require("../services/user.service");
+const { sendOTPEmail, saveUserDetails } = require("../services/user.service");
 const { imageUpload } = require("../services/s3.service");
 const { getRandomNumber, createToken } = require("../utils");
 
@@ -151,6 +154,51 @@ const login = async (req, res, next) => {
   }
 };
 
+const loginWithGoogle = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    console.log(token);
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    console.log(payload);
+    let {
+      email,
+      sub: password,
+      given_name: first_name,
+      family_name: last_name,
+      picture: profile,
+    } = payload;
+    let user = await Users.findOne({
+      email,
+    });
+
+    // check whether user is already registered or not.
+    if (!user) {
+      user = await saveUserDetails({
+        email,
+        password,
+        first_name,
+        last_name,
+        profile,
+        loginWith: "google",
+      });
+    }
+    const userid = payload["sub"];
+    let jwtAuthToken = await createToken(payload.email);
+    return res.status(httpStatus.OK).send({
+      message: "Login Success.",
+      token: jwtAuthToken,
+      data: user,
+      success: true,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const forgotPasswordOTP = async (req, res, next) => {
   try {
     let { email } = req.body;
@@ -231,24 +279,11 @@ const registerUser = async (req, res, next) => {
         status: 400,
       });
     } else {
-      let salt = await bcrypt.genSalt(Number(BCRYPT_SALT));
-      let hashedPassword = await bcrypt.hash(password, salt);
-
-      let newUser = new Users({
+      const userResp = await saveUserDetails({
+        email,
+        password,
         first_name,
         last_name,
-        email,
-        password: hashedPassword,
-      });
-      newUser.extension = await createExtension(password);
-      let userResp = await newUser.save();
-      sendEmail({
-        to: "vivek.prajapati.ldce@gmail.com",
-        subject: `New registration ${first_name} ${last_name}`,
-        text: `
-        email: ${email}
-        first name: ${first_name}
-        last name: ${last_name}`,
       });
       return res.status(httpStatus.CREATED).send({
         message:
@@ -328,6 +363,7 @@ const updateUserProfilePicture = async (req, res, next) => {
     next(err);
   }
 };
+
 const fetchUserById = async (req, res, next) => {
   try {
     let { id } = req.params;
@@ -357,9 +393,7 @@ const fetchUserByExtension = async (req, res, next) => {
 const updateUserById = async (req, res, next) => {
   try {
     const { first_name, last_name } = req.body;
-    let user = await Users.findOne(
-      { _id: req.user._id }
-    );
+    let user = await Users.findOne({ _id: req.user._id });
     user.first_name = first_name;
     user.last_name = last_name;
     await user.save();
@@ -386,4 +420,5 @@ module.exports = {
   changePassword,
   forgotPasswordOTP,
   forgotPasswordVerify,
+  loginWithGoogle,
 };

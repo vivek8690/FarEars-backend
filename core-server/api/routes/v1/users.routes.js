@@ -14,7 +14,8 @@ const {
   fetchUserByExtension,
   changePassword,
   forgotPasswordOTP,
-  forgotPasswordVerify
+  forgotPasswordVerify,
+  loginWithGoogle
 } = require("../../controllers/users.controller");
 
 const { validateUser } = require("../../middlewares");
@@ -30,7 +31,7 @@ router.post("/forgot-password-verify", forgotPasswordVerify);
 router.post("/send-verification-email", isUserVerified, sendVerificationEmail);
 
 router.post("/login", login);
-
+router.post("/login-with-google", loginWithGoogle);
 router.post("/upload", validateUser, updateUserProfilePicture);
 router.patch("/changePassword", validateUser, changePassword);
 

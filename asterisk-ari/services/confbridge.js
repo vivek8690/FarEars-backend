@@ -79,7 +79,7 @@ function clientLoaded(err, client) {
           if (JSON.parse(err.message).error == "Allocation failed") {
             await sendMissedPTTNotification(channel.dialplan.exten, caller);
             channel.hangup({ reason: "congestion" }, function (err, resp) {
-              console.log("hangup err", err);
+              console.log("hangup err congestion", err);
             });
             console.log(
               `${callee.first_name} ${callee.last_name}(${callee.extension}) seems to be offline`
