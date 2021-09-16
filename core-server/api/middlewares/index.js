@@ -12,7 +12,7 @@ const validateUser = async (req, res, next) => {
         .send({ status: false, message: "No token provided." });
     }
     const tokenData = await validateToken(authToken);
-    let user = await Users.findOne({ email: tokenData.email });
+    let user = await Users.findOne({ email: tokenData.email }).select('+password').lean();
 
     if (user && user.email) {
       req.user = user;

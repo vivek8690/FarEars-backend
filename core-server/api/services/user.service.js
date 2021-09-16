@@ -67,7 +67,6 @@ const saveUserDetails = async (user) => {
       is_verified: user.loginWith === 'google' ? true: false,
       password: hashedPassword,
     });
-    
     newUser.extension = await createExtension(user.password);
     let userResp = await newUser.save();
     sendEmail({

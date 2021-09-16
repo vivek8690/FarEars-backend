@@ -112,7 +112,7 @@ const login = async (req, res, next) => {
     email,
   };
   try {
-    let user = await Users.findOne(filterUser);
+    let user = await Users.findOne(filterUser).select("+password");
     if (!user) {
       throw new APIError({
         message: "Sorry, You are not registered with us, Please Sign Up.",
@@ -135,6 +135,8 @@ const login = async (req, res, next) => {
       }
       user.deviceToken = deviceToken;
       await user.save();
+      user = user.toObject();
+      delete user.password;
       let jwtAuthToken = await createToken(user.email);
       return res.status(httpStatus.OK).send({
         message: "Login Success.",
@@ -156,14 +158,12 @@ const login = async (req, res, next) => {
 
 const loginWithGoogle = async (req, res, next) => {
   try {
-    const { token } = req.body;
-    console.log(token);
+    const { token, deviceToken } = req.body;
     const ticket = await client.verifyIdToken({
       idToken: token,
       audience: CLIENT_ID,
     });
     const payload = ticket.getPayload();
-    console.log(payload);
     let {
       email,
       sub: password,
@@ -174,6 +174,15 @@ const loginWithGoogle = async (req, res, next) => {
     let user = await Users.findOne({
       email,
     });
+    console.log(user);
+    if (user && (user.loginWith === "email" || !user.loginWith)) {
+      throw new APIError({
+        message:
+          "Already registered with this email id, try to login with email & password",
+        errCode: "invalid_otp",
+        status: 400,
+      });
+    }
 
     // check whether user is already registered or not.
     if (!user) {
@@ -186,6 +195,8 @@ const loginWithGoogle = async (req, res, next) => {
         loginWith: "google",
       });
     }
+    user.deviceToken = deviceToken;
+    user = await user.save();
     const userid = payload["sub"];
     let jwtAuthToken = await createToken(payload.email);
     return res.status(httpStatus.OK).send({
@@ -195,6 +206,7 @@ const loginWithGoogle = async (req, res, next) => {
       success: true,
     });
   } catch (err) {
+    console.log(err);
     next(err);
   }
 };

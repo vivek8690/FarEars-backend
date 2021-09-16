@@ -77,7 +77,7 @@ function clientLoaded(err, client) {
       async function (err, dialedObj) {
         if (err) {
           if (JSON.parse(err.message).error == "Allocation failed") {
-            await sendMissedPTTNotification(channel.dialplan.exten, caller);
+            // await sendMissedPTTNotification(channel.dialplan.exten, caller);
             channel.hangup({ reason: "congestion" }, function (err, resp) {
               console.log("hangup err congestion", err);
             });

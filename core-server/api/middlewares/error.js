@@ -19,7 +19,7 @@ const handler = (err, req, res) => {
 	if (env !== 'development') {
 		delete response.stack;
 	}
-
+	console.log(err);
 	res.status(err.status);
 	return res.json(response);
 };
