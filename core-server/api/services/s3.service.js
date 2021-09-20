@@ -12,8 +12,12 @@ const imageUpload = async (base64, userId) => {
 
   // Ensure that you POST a base64 data to your server.
   // Let's assume the variable "base64" is one.
+  if(base64){
+    return '';
+  }
+  console.log(base64);
   const base64Data = new Buffer.from(base64.replace(/^data:image\/\w+;base64,/, ""), 'base64');
-
+  console.log(base64Data);
   // Getting the file type, ie: jpeg, png or gif
   const type = await fileType.fromBuffer(base64Data);
   // With this setup, each time your user uploads an image, will be overwritten.
@@ -37,7 +41,7 @@ const imageUpload = async (base64, userId) => {
     location = Location;
     key = Key;
   } catch (error) {
-     // console.log(error)
+     console.log(error)
   }
 
   // Save the Location (url) to your database and Key if needs be.

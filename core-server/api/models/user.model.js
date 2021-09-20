@@ -52,7 +52,7 @@ UserSchema.pre("save", async function (next) {
   const { broadcastUpdate } = require("../services/user.service");
   try {
     await broadcastUpdate(this.toJSON());
-    if (!this.profile) {
+    if (!this.profile || this.profile === '') {
       const profileURL = await uploadFromURL(
         `${this.first_name}+${this.last_name}`
       );

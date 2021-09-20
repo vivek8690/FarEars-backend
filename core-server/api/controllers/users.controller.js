@@ -358,7 +358,7 @@ const updateUserProfilePicture = async (req, res, next) => {
       const location = await imageUpload(base64, req.user._id);
       user = await Users.findOne({ email: req.user.email });
       user.profile = location;
-      await user.save();
+      user = await user.save();
       return res.send({
         message: "Profile Picture Updated Successfully.",
         data: user,
