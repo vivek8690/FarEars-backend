@@ -35,6 +35,11 @@ const UserSchema = new mongoose.Schema(
     profile: {
       type: String,
     },
+    status: {
+      type: String,
+      enum: ['online','offline'],
+      default: 'offline'
+    },
     deviceToken: {
       type: String,
     },

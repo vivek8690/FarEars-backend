@@ -174,7 +174,6 @@ const loginWithGoogle = async (req, res, next) => {
     let user = await Users.findOne({
       email,
     });
-    console.log(user);
     if (user && (user.loginWith === "email" || !user.loginWith)) {
       throw new APIError({
         message:

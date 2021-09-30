@@ -208,7 +208,7 @@ RUN echo "[general]\n\
         uri=$DATABASE_HOST/$DATABASE_NAME?authSource=admin\n\
         \n\
         [cdr]\n\
-        uri=$DATABASE_HOST/asterisk?authSource=admin\n\
+        uri=$DATABASE_HOST/$DATABASE_NAME?authSource=admin\n\
         database=asterisk\n\
         collection=cdr\n\
         \n\
@@ -283,5 +283,11 @@ RUN echo "[general]\n\
         directory=/var/lib/asterisk/moh\n\
         random=yes" > /etc/asterisk/musiconhold.conf
 
+  RUN echo installing s3fs
+  RUN apt-get install -y s3fs
+  RUN echo AKIATWCPMVWWHIPS37UF:jONgFcFuy4nSq5WmS+gFZZG4C1pC3xJLMhaAyjBv > ~/.passwd-s3fs
+  RUN chmod 600 ~/.passwd-s3fs
+  RUN cat ~/.passwd-s3fs
+  #RUN s3fs recordings-far-ears /var/spool/asterisk/recording/ -o passwd_file=~/.passwd-s3fs -o nonempty -o default_acl=public-read
 
 ENTRYPOINT ["asterisk", "-c"]
