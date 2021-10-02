@@ -12,6 +12,6 @@ router.get("/", validateUser, getAllInvitations);
 router.post("/", validateUser, inviteUser);
 router.post("/action", validateUser, manageInvite);
 // temp for testing only
-router.delete("/", deleteAllInvitations);
+// router.delete("/", deleteAllInvitations);
 
 module.exports = router;

@@ -64,8 +64,8 @@ const sendMissedPTTNotification = async (toExt, callee) => {
   try {
     const message = {
       notification: {
-        title: `${callee.first_name} ${callee.last_name}`,
-        body: `you have missed PTT`
+        title: `Missed Voice Message`,
+        body: `${callee.first_name} ${callee.last_name} has tried to contact you`
       },
       data: {
         type: "missed_ptt",

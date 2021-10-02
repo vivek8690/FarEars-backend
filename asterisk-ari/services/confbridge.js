@@ -77,13 +77,14 @@ function clientLoaded(err, client) {
       async function (err, dialedObj) {
         if (err) {
           if (JSON.parse(err.message).error == "Allocation failed") {
-            // await sendMissedPTTNotification(channel.dialplan.exten, caller);
-            channel.hangup({ reason: "congestion" }, function (err, resp) {
+            channel.hangup({ reason: "congestion" }, async function (err, resp) {
               console.log("hangup err congestion", err);
+              await sendMissedPTTNotification(channel.dialplan.exten, caller);
+              console.log(
+                `${callee.first_name} ${callee.last_name}(${callee.extension}) seems to be offline`
+              );
             });
-            console.log(
-              `${callee.first_name} ${callee.last_name}(${callee.extension}) seems to be offline`
-            );
+
             // setTimeout(() => {
             //   dialed.originate(
             //     {
@@ -192,13 +193,14 @@ function clientLoaded(err, client) {
     });
   }
   function recordBridge(bridge, channel) {
+    const recordingFile = `${channel.caller.number}/${bridge.id}`;
     bridge.record(
-      { bridgeId: bridge.id, format: "wav", name: bridge.id },
+      { bridgeId: bridge.id, format: "wav", name: recordingFile },
       function (err, liverecording) {
         createRecording(
           channel.caller.number,
           channel.dialplan.exten,
-          bridge.id
+          recordingFile
         );
         // console.log("liverecording", liverecording);
         if (err) {
