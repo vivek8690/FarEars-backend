@@ -70,7 +70,7 @@ const saveUserDetails = async (user) => {
     newUser.extension = await createExtension(user.password);
     let userResp = await newUser.save();
     sendEmail({
-      to: "vivek.prajapati.ldce@gmail.com",
+      to: "farearsoneday@gmail.com",
       subject: `New registration ${newUser.first_name} ${newUser.last_name}`,
       text: `
       email: ${newUser.email}

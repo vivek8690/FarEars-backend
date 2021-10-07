@@ -7,16 +7,24 @@ const s3bucket = new AWS.S3({
   region: process.env.AWS_S3_BUCKET_REGION,
 });
 
+const s3bucketRecoring = new AWS.S3({
+  signatureVersion: "v4",
+  accessKeyId: 'AKIATWCPMVWWHIPS37UF',
+  secretAccessKey: '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',
+  region: process.env.AWS_S3_BUCKET_REGION,
+});
 
 const imageUpload = async (base64, userId) => {
-
   // Ensure that you POST a base64 data to your server.
   // Let's assume the variable "base64" is one.
-  if(base64){
-    return '';
+  if (base64) {
+    return "";
   }
   console.log(base64);
-  const base64Data = new Buffer.from(base64.replace(/^data:image\/\w+;base64,/, ""), 'base64');
+  const base64Data = new Buffer.from(
+    base64.replace(/^data:image\/\w+;base64,/, ""),
+    "base64"
+  );
   console.log(base64Data);
   // Getting the file type, ie: jpeg, png or gif
   const type = await fileType.fromBuffer(base64Data);
@@ -27,21 +35,21 @@ const imageUpload = async (base64, userId) => {
     Bucket: process.env.AWS_S3_BUCKET_NAME,
     Key: `${userId}_${Date.now()}.${type.ext}`, // type is not required
     Body: base64Data,
-    ACL: 'public-read',
-    ContentEncoding: 'base64', // required
-    ContentType: `image/${type}` // required. Notice the back ticks
-  }
+    ACL: "public-read",
+    ContentEncoding: "base64", // required
+    ContentType: `image/${type}`, // required. Notice the back ticks
+  };
 
   // The upload() is used instead of putObject() as we'd need the location url and assign that to our user profile/database
   // see: http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property
-  let location = '';
-  let key = '';
+  let location = "";
+  let key = "";
   try {
     const { Location, Key } = await s3bucket.upload(params).promise();
     location = Location;
     key = Key;
   } catch (error) {
-     console.log(error)
+    console.log(error);
   }
 
   // Save the Location (url) to your database and Key if needs be.
@@ -51,6 +59,22 @@ const imageUpload = async (base64, userId) => {
   return location;
 
   // To delete, see: https://gist.github.com/SylarRuby/b3b1430ca633bc5ffec29bbcdac2bd52
-}
+};
 
-module.exports = { s3bucket, imageUpload };
+const getPresignedURL = (filename) => {
+  try {
+    if(filename.startsWith('/')){
+      filename = filename.slice(1, filename.length);
+    }
+    const url = s3bucketRecoring.getSignedUrl("getObject", {
+      Bucket: 'recordings-far-ears',
+      Key: filename,
+      Expires: 300,
+    });
+    return url;
+  } catch (err) {
+    throw err;
+  }
+};
+
+module.exports = { s3bucket, imageUpload, getPresignedURL };

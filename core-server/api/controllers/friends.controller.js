@@ -2,6 +2,8 @@ const ObjectId = require("mongoose").Types.ObjectId;
 const { Invitation, Users, CDR, Recording } = require("../models");
 const APIError = require("../utils/APIError");
 const { getAllFriendsList } = require("../services/friends.service");
+const { getPresignedURL } = require("../services/s3.service");
+
 
 const getAllFriends = async (req, res, next) => {
   try {
@@ -96,10 +98,25 @@ const getAllRecordings = async (req, res, next) => {
   }
 };
 
+const getRecordingSignedURL = async (req, res, next) => {
+  try{
+    const s3Filename = new URL(req.recording.s3URL).pathname;
+    const signedUrl = await getPresignedURL(s3Filename);
+    res.status(200).json({
+      message: "Recordings url to play",
+      data: signedUrl,
+    });
+  }catch(err){
+    console.log(err);
+    next(err);
+  }
+};
+
 module.exports = {
   getAllFriends,
   validateFriends,
   getAllRecents,
   getAllRecordings,
   createRecording,
+  getRecordingSignedURL
 };
