@@ -48,7 +48,6 @@ const userHasAccess = async (req, res, next) => {
       recording.toUser === req.user.extension ||
       recording.fromUser === req.user.extension
     ) {
-      console.log("inside if");
       req.recording = recording;
       next();
     }else{

@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const expressValidation = require('express-validation');
 const APIError = require('../utils/APIError');
 const { env } = require('../../config/vars');
+const Sentry = require("@sentry/node");
 
 /**
  * Error handler. Send stacktrace only during development
@@ -19,7 +20,7 @@ const handler = (err, req, res) => {
 	if (env !== 'development') {
 		delete response.stack;
 	}
-	console.log(err);
+	Sentry.captureException(err);
 	res.status(err.status);
 	return res.json(response);
 };
@@ -61,7 +62,7 @@ exports.converter = (err, req, res, next) => {
  */
 exports.notFound = (req, res) => {
 	const err = new APIError({
-		message: 'Not found',
+		message: `Not found`,
 		status: httpStatus.NOT_FOUND,
 	});
 	return handler(err, req, res);

@@ -20,13 +20,22 @@ MongoClient.connect(`${mongo.uri}`).then(function (client) {
     const extension = change.documentKey._id.split(";")[0];
     const user = await Users.findOne({ extension });
     if (change.operationType === "delete") {
-      user.status = "offline";
-      console.log(`*************${user.first_name} is offline************ ${new Date()}`);
+      setTimeout(async() => {
+        const contact = await db
+          .collection("ps_contacts")
+          .findOne({ endpoint: parseInt(user.extension) });
+          if(!contact){
+            user.status = "offline";
+            console.log(
+              `*************${user.first_name} is offline************ ${new Date()}`
+            );
+            await user.save();
+          }
+      },500);
     } else {
       user.status = "online";
-      console.log(`${user.first_name} is online ::::::::: ${new Date()}`);
+      await user.save();
     }
-    await user.save();
   });
 });
 /**

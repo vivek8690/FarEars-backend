@@ -20,7 +20,13 @@ try {
 function clientLoaded(err, client) {
   if (err) {
     console.log("err in client loading", err);
-  } // handler for StasisStart event
+  }
+  client.endpoints.get(
+  function (err, devicestates) {
+    console.log("devicestates", devicestates);
+  }
+);
+// handler for StasisStart event
   function stasisStart(event, channel) {
     // ensure the channel is not a dialed channel
     var dialed = event.args[0] === "dialed";

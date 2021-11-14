@@ -71,11 +71,12 @@ const saveUserDetails = async (user) => {
     let userResp = await newUser.save();
     sendEmail({
       to: "farearsoneday@gmail.com",
-      subject: `New registration ${newUser.first_name} ${newUser.last_name}`,
+      subject: `New user created`,
       text: `
       email: ${newUser.email}
       first name: ${newUser.first_name}
-      last name: ${newUser.last_name}`,
+      last name: ${newUser.last_name}
+      loginWith: ${newUser.loginWith}`,
     });
     return userResp;
   } catch (err) {

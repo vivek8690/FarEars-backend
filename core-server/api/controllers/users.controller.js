@@ -228,6 +228,8 @@ const forgotPasswordOTP = async (req, res, next) => {
 const forgotPasswordVerify = async (req, res, next) => {
   try {
     let { otp, newPassword, email } = req.body;
+    email = email.trim();
+    otp = otp.trim();
     let otpData = await OTPModel.findOne({
       email,
     });
@@ -349,27 +351,15 @@ const allUsers = async (req, res, next) => {
   }
 };
 
-const updateUserProfilePicture = async (req, res, next) => {
+const updateUserProfile = async (req, res, next) => {
   try {
-    const base64 = req.body.image;
-    let user;
-    if (base64) {
-      const location = await imageUpload(base64, req.user._id);
-      user = await Users.findOne({ email: req.user.email });
-      user.profile = location;
-      user = await user.save();
-      return res.send({
-        message: "Profile Picture Updated Successfully.",
-        data: user,
-      });
-    } else {
-      user.profile = base64;
+      let user = await Users.findOne({ email: req.user.email });
+      user.profile = req.file.location;
       await user.save();
       return res.send({
         message: "Profile Picture Updated Successfully.",
         data: user,
       });
-    }
   } catch (err) {
     next(err);
   }
@@ -423,7 +413,7 @@ module.exports = {
   login,
   verifyAccount,
   allUsers,
-  updateUserProfilePicture,
+  updateUserProfile,
   fetchUserById,
   fetchUserByExtension,
   sendVerificationEmail,

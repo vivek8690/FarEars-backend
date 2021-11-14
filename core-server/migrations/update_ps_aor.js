@@ -5,7 +5,7 @@ var MongoClient = require('mongodb').MongoClient;
 			// const { PSAors } = require('../api/models');
 			let ps_aors = await db.collection('ps_aors').find({}).toArray();
       ps_aors.forEach(async (psaor) => {
-         await db.collection('ps_aors').findOneAndUpdate({_id: psaor._id}, {$set:{max_contacts:1,minimum_expiration:60,maximum_expiration:60,remove_existing:'yes'}})
+         await db.collection('ps_aors').findOneAndUpdate({_id: psaor._id}, {$set:{max_contacts:1,minimum_expiration:60,maximum_expiration:60,remove_existing:'yes',qualify_frequency:30,qualify_timeout:5}})
       })
       console.log(ps_aors);
 				 // change_streams.on('change', async function(change){

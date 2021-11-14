@@ -7,7 +7,7 @@ const s3bucket = new AWS.S3({
   region: process.env.AWS_S3_BUCKET_REGION,
 });
 
-const s3bucketRecoring = new AWS.S3({
+const s3bucketRecording = new AWS.S3({
   signatureVersion: "v4",
   accessKeyId: 'AKIATWCPMVWWHIPS37UF',
   secretAccessKey: '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',
@@ -66,7 +66,7 @@ const getPresignedURL = (filename) => {
     if(filename.startsWith('/')){
       filename = filename.slice(1, filename.length);
     }
-    const url = s3bucketRecoring.getSignedUrl("getObject", {
+    const url = s3bucketRecording.getSignedUrl("getObject", {
       Bucket: 'recordings-far-ears',
       Key: filename,
       Expires: 300,

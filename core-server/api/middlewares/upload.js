@@ -29,7 +29,8 @@ const upload = multer({
       cb(null, { fieldName: file.originalname });
     },
     key: function (req, file, cb) {
-      cb(null, file.originalname);
+      console.log(file);
+      cb(null, `${Date.now()}_${file.originalname}`);
     },
   }),
 });
