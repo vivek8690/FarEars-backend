@@ -40,12 +40,6 @@ app.use(cors());
 // mount api v1 routes
 app.use('/api', routes);
 // Add your custom data extracted from the request
-app.use(function (req, res, next) {
-  Sentry.getCurrentHub().configureScope(function (scope) {
-    scope.setExtra("application", "12345678");
-  });
-  next();
-});
 
 // The error handler must be before any other error middleware and after all controllers
 app.use(Sentry.Handlers.errorHandler());
