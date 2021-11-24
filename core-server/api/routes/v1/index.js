@@ -6,7 +6,7 @@ const userRoute = require("../v1/users.routes");
 const inviteRoute = require("../v1/invite.routes");
 const friendRoute = require("../v1/friends.routes");
 const notificationRoute = require("../v1/notification.routes");
-const forceUpdateVersion = '1.0.16';
+const forceUpdateVersion = '1.0.18';
 
 const { emailServiceStatus, mongoDBStatus } = require("../../services");
 

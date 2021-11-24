@@ -12,7 +12,14 @@ const {
   createExtension,
   createAsteriskPassword,
 } = require("../services/asterisk");
-const { OTPModel, Users, Invitation, Friends, Groups } = require("../models");
+const {
+  OTPModel,
+  Users,
+  Invitation,
+  Friends,
+  Groups,
+  Session,
+} = require("../models");
 
 const { sendEmail } = require("../services");
 const { sendOTPEmail, saveUserDetails } = require("../services/user.service");
@@ -138,6 +145,11 @@ const login = async (req, res, next) => {
       user = user.toObject();
       delete user.password;
       let jwtAuthToken = await createToken(user.email);
+      await Session.create({
+        email: user.email,
+        ipInfo: req.ipInfo,
+        country: req.ipInfo.country,
+      });
       return res.status(httpStatus.OK).send({
         message: "Login Success.",
         token: jwtAuthToken,
@@ -198,6 +210,11 @@ const loginWithGoogle = async (req, res, next) => {
     user = await user.save();
     const userid = payload["sub"];
     let jwtAuthToken = await createToken(payload.email);
+    await Session.create({
+      email: payload.email,
+      ipInfo: req.ipInfo,
+      country: req.ipInfo.country,
+    });
     return res.status(httpStatus.OK).send({
       message: "Login Success.",
       token: jwtAuthToken,
@@ -353,13 +370,13 @@ const allUsers = async (req, res, next) => {
 
 const updateUserProfile = async (req, res, next) => {
   try {
-      let user = await Users.findOne({ email: req.user.email });
-      user.profile = req.file.location;
-      await user.save();
-      return res.send({
-        message: "Profile Picture Updated Successfully.",
-        data: user,
-      });
+    let user = await Users.findOne({ email: req.user.email });
+    user.profile = req.file.location;
+    await user.save();
+    return res.send({
+      message: "Profile Picture Updated Successfully.",
+      data: user,
+    });
   } catch (err) {
     next(err);
   }
