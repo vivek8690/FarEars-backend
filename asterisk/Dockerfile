@@ -283,11 +283,11 @@ RUN echo "[general]\n\
         directory=/var/lib/asterisk/moh\n\
         random=yes" > /etc/asterisk/musiconhold.conf
 
-  RUN echo installing s3fs
-  RUN apt-get install -y s3fs
-  RUN echo AKIATWCPMVWWHIPS37UF:jONgFcFuy4nSq5WmS+gFZZG4C1pC3xJLMhaAyjBv > ~/.passwd-s3fs
-  RUN chmod 600 ~/.passwd-s3fs
-  RUN cat ~/.passwd-s3fs
-  #RUN s3fs recordings-far-ears /var/spool/asterisk/recording/ -o passwd_file=~/.passwd-s3fs -o nonempty -o default_acl=public-read
+RUN echo "apt-get install -y s3fs \n\
+    echo AKIATWCPMVWWHIPS37UF:jONgFcFuy4nSq5WmS+gFZZG4C1pC3xJLMhaAyjBv > /home/.passwd-s3fs \n\
+    chmod 600 /home/.passwd-s3fs \n\
+    cat /home/.passwd-s3fs \n\
+    s3fs recordings-far-ears /var/spool/asterisk/recording -o passwd_file=/home/.passwd-s3fs -o nonempty \n\
+    asterisk -c" > /home/entry.sh
 
-ENTRYPOINT ["asterisk", "-c"]
+ENTRYPOINT ["bash","/home/entry.sh"]
