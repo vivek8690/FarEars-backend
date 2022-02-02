@@ -9,6 +9,7 @@ aws.config.update({
   region: process.env.AWS_S3_BUCKET_REGION,
 });
 
+
 const s3 = new aws.S3();
 
 const fileFilter = (req, file, cb) => {
@@ -29,7 +30,6 @@ const upload = multer({
       cb(null, { fieldName: file.originalname });
     },
     key: function (req, file, cb) {
-      console.log(file);
       cb(null, `${Date.now()}_${file.originalname}`);
     },
   }),

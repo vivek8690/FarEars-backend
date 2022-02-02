@@ -23,7 +23,6 @@ const {
 
 const { sendEmail } = require("../services");
 const { sendOTPEmail, saveUserDetails } = require("../services/user.service");
-const { imageUpload } = require("../services/s3.service");
 const { getRandomNumber, createToken } = require("../utils");
 
 const sendVerificationEmail = async (req, res, next) => {
@@ -370,7 +369,9 @@ const allUsers = async (req, res, next) => {
 
 const updateUserProfile = async (req, res, next) => {
   try {
+    console.log("update profile");
     let user = await Users.findOne({ email: req.user.email });
+    console.log(req.file.location);
     user.profile = req.file.location;
     await user.save();
     return res.send({
@@ -378,6 +379,7 @@ const updateUserProfile = async (req, res, next) => {
       data: user,
     });
   } catch (err) {
+    console.log(err);
     next(err);
   }
 };

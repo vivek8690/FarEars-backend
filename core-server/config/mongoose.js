@@ -26,9 +26,6 @@ MongoClient.connect(`${mongo.uri}`).then(function (client) {
           .findOne({ endpoint: parseInt(user.extension) });
           if(!contact){
             user.status = "offline";
-            console.log(
-              `*************${user.first_name} is offline************ ${new Date()}`
-            );
             await user.save();
           }
       },500);

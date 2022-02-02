@@ -208,7 +208,6 @@ function clientLoaded(err, client) {
           channel.dialplan.exten,
           recordingFile
         );
-        // console.log("liverecording", liverecording);
         if (err) {
           console.log(err);
         }

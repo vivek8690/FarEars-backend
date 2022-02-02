@@ -65,14 +65,11 @@ const inviteToBridge = async function (inviteTo, inviteIn, fromUser) {
 
   async function dtmfReceived(event, channel) {
     var digit = parseInt(event.digit);
-    console.log("digit pressed:::", digit);
     if (digit == "1") {
       await channel.mute({ direction: "in" });
-      console.log(`${channel.name} has muted his self`);
     }
     if (digit == "2") {
       await channel.unmute({ direction: "in" });
-      console.log(`${channel.name} has unmuted his self`);
     }
   }
   async function joinMixingBridge(inviteIn, dialed) {
@@ -133,7 +130,6 @@ const inviteToBridge = async function (inviteTo, inviteIn, fromUser) {
         mixingBridge.id
       );
       await mixingBridge.addChannel({ channel: dialed.id, absorbDTMF: false });
-      console.log("after", mixingBridge.channels);
     } catch (err) {
       console.log("Err:::::::::::::", err);
     }

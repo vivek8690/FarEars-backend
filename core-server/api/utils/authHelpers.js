@@ -22,7 +22,6 @@ const createConnection = () => {
 const urlGoogle = () => {
 	const auth = createConnection();
 	const url = getConnectionUrl(auth);
-	console.log(url, 'url');
 	return url;
 };
 
