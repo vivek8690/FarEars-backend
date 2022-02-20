@@ -18,7 +18,7 @@ services:
     network_mode: "host"
     volumes:
       - /var/log/asterisk:/var/log/asterisk
-      # - /var/recordings:/var/spool/asterisk/recording
+      - /var/asterisk/recording:/var/spool/asterisk/recording
   nodejs:
     image: node
     restart: always

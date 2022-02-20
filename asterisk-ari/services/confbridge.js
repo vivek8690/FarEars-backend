@@ -21,11 +21,6 @@ function clientLoaded(err, client) {
   if (err) {
     console.log("err in client loading", err);
   }
-  client.endpoints.get(
-  function (err, devicestates) {
-    console.log("devicestates", devicestates);
-  }
-);
 // handler for StasisStart event
   function stasisStart(event, channel) {
     // ensure the channel is not a dialed channel
@@ -209,7 +204,7 @@ function clientLoaded(err, client) {
           recordingFile
         );
         if (err) {
-          console.log(err);
+          console.log("error in recording",err);
         }
       }
     );

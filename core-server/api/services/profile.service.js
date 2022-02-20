@@ -38,7 +38,7 @@ exports.uploadFromURL = async (name) => {
     }/profile-${Date.now().toString()}.${type}`;
 
     const params = {
-      Bucket: "critic-caller",
+      Bucket: "farears-data",
       Key: key,
       Body: buffer,
       ContentEncoding: "base64",

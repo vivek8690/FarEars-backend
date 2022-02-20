@@ -19,6 +19,7 @@ const {
   forgotPasswordVerify,
   loginWithGoogle,
   updateUserProfile,
+  logout
 } = require("../../controllers/users.controller");
 
 const { validateUser } = require("../../middlewares");
@@ -41,5 +42,6 @@ router.patch("/:id", validateUser, updateUserById);
 router.get("/:id", validateUser, fetchUserById);
 router.post("/verify-account", verifyAccount);
 router.get("/extension/:id", fetchUserByExtension);
+router.post("/logout", validateUser, logout);
 
 module.exports = router;

@@ -427,6 +427,21 @@ const updateUserById = async (req, res, next) => {
   }
 };
 
+const logout = async (req, res, next) => {
+  try{
+    let user = await Users.findOne({ _id: req.user._id });
+    user.deviceToken = "";
+    await user.save();
+    return res.send({
+      message: "User loggedout Successfully.",
+      data: user,
+    });
+  }catch (err) {
+    console.log(err);
+    next(err);
+  }
+}
+
 module.exports = {
   registerUser,
   login,
@@ -441,4 +456,5 @@ module.exports = {
   forgotPasswordOTP,
   forgotPasswordVerify,
   loginWithGoogle,
+  logout
 };

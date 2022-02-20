@@ -45,6 +45,7 @@ const createToken = (payload) => {
         email: payload,
       },
       JWT_SECRET,
+      { expiresIn: "7 days" },
       (err, token) => {
         if (err) {
           return reject(err);
