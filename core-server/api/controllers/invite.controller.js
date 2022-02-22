@@ -45,7 +45,7 @@ const inviteUser = async (req, res, next) => {
     } else {
       throw new APIError({
         message:
-          "Sorry, Your friend does not have verified account with RogerThat, Please ask him/her to sign up",
+          "Sorry, Your friend does not have verified account with FarEars, Please ask him/her to sign up",
         status: 400,
       });
     }
@@ -119,9 +119,65 @@ const deleteAllInvitations = async (req, res, next) => {
   }
 };
 
+const scanAndAdd = async (req,res,next) => {
+  try {
+    let { email } = req.body;
+    email = email.trim();
+    let { first_name, last_name } = req.user;
+    let userExist = await Users.findOne({ email });
+    if (userExist && userExist.is_verified) {
+      const invitationObj = await Invitation.findOne({
+        $or: [
+          { fromUser: userExist._id, toUser: req.user._id },
+          { toUser: userExist._id, fromUser: req.user._id },
+        ],
+      });
+      if (!invitationObj) {
+        const createdInvitationObj = await Invitation.findOneAndUpdate(
+          { fromUser: req.user._id, toUser: userExist._id },
+          { fromUser: req.user._id, toUser: userExist._id, status: "accepted"},
+          { setDefaultsOnInsert: true, new: true, upsert: true }
+        ).populate('fromUser').populate('toUser');
+        // send push notification to user
+        const message = {
+          notification: {
+            title: `Friend request`,
+            body: `${first_name} ${last_name} has added you in his contacts`,
+          },
+          data: {
+            type: "scanned_qr",
+            details: JSON.stringify(createdInvitationObj)
+          },
+        };
+        await sendPushNotification(userExist.deviceToken, message);
+        return res.send({
+          message: "Contact added successfully.",
+        });
+      } else {
+        throw new APIError({
+          message: "Please check your contacts list it's already there",
+          status: 400,
+        });
+      }
+    } else {
+      throw new APIError({
+        message:
+          "Sorry, Your friend does not have verified account with FarEars, Please ask him/her to sign up",
+        status: 400,
+      });
+    }
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+
+
+}
+
 module.exports = {
   inviteUser,
   manageInvite,
   getAllInvitations,
   deleteAllInvitations,
+  scanAndAdd
 };
