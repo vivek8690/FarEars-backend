@@ -1,6 +1,7 @@
 /*jshint node:true*/
 "use strict";
 var ari = require("ari-client");
+const waitPort = require('wait-port');
 const {
   sendNotificationByExt,
   getExtensionDetails,
@@ -8,13 +9,32 @@ const {
   createRecording,
 } = require("../services/notification");
 var clientObj, holdingBridge;
+const params = {
+  host: 'localhost',
+  port: 8088,
+};
 
 // following details you can find from /etc/asterisk/ari.conf and /etc/asterisk/http.conf
-try {
-  ari.connect("http://localhost:8088", "asterisk", "asterisk", clientLoaded);
-} catch (err) {
-  console.log("throwed error::", err);
+const loadClient = function(){
+  try {
+        ari.connect("http://localhost:8088", "asterisk", "asterisk", clientLoaded)
+  } catch (err) {
+    console.log("throwed error::", err);
+  }
 }
+
+waitPort(params)
+  .then((open) => {
+    if (open){
+      console.log('The port is now open!');
+      setTimeout(loadClient,5000)
+    }
+    else console.log('The port did not open before the timeout...');
+  })
+  .catch((err) => {
+    console.err(`An unknown error occured while waiting for the port: ${err}`);
+  });
+
 
 // handler for client being loaded
 function clientLoaded(err, client) {

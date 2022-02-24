@@ -25,15 +25,15 @@ services:
     container_name: node_server
     ports:
       - "3000:3000"
-    command: npm run dev
+    command: npm start
     build:
       context: ./core-server
       dockerfile: Dockerfile
     volumes:
       - ./core-server:/usr/src/app
-  asterisk-ari:
+  asterisk_ari:
     image: node
-    container_name: asterisk-ari
+    container_name: asterisk_ari
     network_mode: "host"
     restart: always
     ports:
@@ -46,3 +46,4 @@ services:
       - ./asterisk-ari:/usr/src/app
     depends_on:
       - asterisk
+      - nodejs
